@@ -30,7 +30,7 @@
 
 
 static logic SingleStepping;
-static sig_atomic_t UserBreak=0;
+static sig_atomic_t UserBreak = 0;
 
 
 void Quit() {
@@ -39,13 +39,14 @@ void Quit() {
 }
 
 void Break(int Signal) {
-	if(SingleStepping) Quit();
+	if (SingleStepping)
+		Quit();
 	fflush(stdout);
-	UserBreak=1;
+	UserBreak = 1;
 }
 
 void Usage(const char* ProgramName, const char* Message) {
-	if(Message) fprintf(stdout, "%s\n\n", Message);
+	if (Message) fprintf(stdout, "%s\n\n", Message);
 	fprintf(stdout, "Usage: %s [<options>] <binaryfile>\n", ProgramName);
 	fprintf(stdout, "Run, debug and profile a Z80 program compiled with SDCC\n");
 	fprintf(stdout, "\n<binaryfile> contains a raw Z80 program, which is loaded at\n");
@@ -63,47 +64,58 @@ void Usage(const char* ProgramName, const char* Message) {
 }
 
 void ReadFileLine(FILE* Handle, unsigned int Line, char* String) {
-        unsigned int i;
-        fseek(Handle, 0, SEEK_SET);
-        for(i=0; i<Line; i++) fgets(String, MAX_STRING, Handle);
-	String[strlen(String)-1]='\0';
+	unsigned int i;
+
+	fseek(Handle, 0, SEEK_SET);
+	for (i = 0; i < Line; i++)
+		fgets(String, MAX_STRING, Handle);
+	String[strlen(String) - 1] = '\0';
 }
 
 void Stop(word Address) {
 	char Mnemonic[MAX_NAME];
 	source SourceSpec;
-	SingleStepping=TRUE;
-        fprintf(stdout, "\nFrame %ld - Stopping at address %04x: ", GetFrame(), Address);
-        Disassemble(&Address, Mnemonic);
-        fprintf(stdout, "%s\n", Mnemonic);
+
+	SingleStepping = TRUE;
+	fprintf(stdout, "\nFrame %ld - Stopping at address %04x: ", GetFrame(), Address);
+	Disassemble(&Address, Mnemonic);
+	fprintf(stdout, "%s\n", Mnemonic);
 	PrintRegisters(stdout); fprintf(stdout, "\n");
-	SourceSpec=SearchSource(Address);
-	if(SourceSpec.File!=NULL) {
-	        char SourceLine[MAX_STRING];
-                ReadFileLine(SourceSpec.File, SourceSpec.Line-1, SourceLine);
+	SourceSpec = SearchSource(Address);
+	if (SourceSpec.File != NULL) {
+		char SourceLine[MAX_STRING];
+		ReadFileLine(SourceSpec.File, SourceSpec.Line - 1, SourceLine);
 		fprintf(stdout, "           %s\n", SourceLine);
 		ReadFileLine(SourceSpec.File, SourceSpec.Line, SourceLine);
 		fprintf(stdout, "%5d  ->  %s\n", SourceSpec.Line, SourceLine);
-                ReadFileLine(SourceSpec.File, SourceSpec.Line+1, SourceLine);
-                fprintf(stdout, "           %s\n", SourceLine);
-	} else fprintf(stdout, "(no C source line showable)\n");
+		ReadFileLine(SourceSpec.File, SourceSpec.Line + 1, SourceLine);
+		fprintf(stdout, "           %s\n", SourceLine);
+	}
+	else fprintf(stdout, "(no C source line showable)\n");
 }
 
 #if 0
 
 void Debug(word* Address) {
-        char CommandLine[MAX_STRING];
-        char Command[MAX_NAME];
+	char CommandLine[MAX_STRING];
+	char Command[MAX_NAME];
 	char* Arguments;
 	char Mnemonic[MAX_NAME];
-        fprintf(stdout, "$ "); fgets(CommandLine, MAX_STRING, stdin);
-        do sscanf(CommandLine, "%s", Command); while(strlen(Command)==0);
-	Arguments=&CommandLine[strlen(Command)+1];
-	if(!strcmp(Command, "irq")) {
+
+	fprintf(stdout, "$ ");
+	fgets(CommandLine, MAX_STRING, stdin);
+
+	do sscanf(CommandLine, "%s", Command);
+	while (strlen(Command) == 0);
+
+	Arguments = &CommandLine[strlen(Command) + 1];
+	if (!strcmp(Command, "irq")) {
 		RaiseIRQ();
-        } else if(!strcmp(Command, "quit")) {
+	}
+	else if (!strcmp(Command, "quit")) {
 		Quit();
-	} else {
+	}
+	else {
 		fprintf(stdout, "Invalid command '%s'\n", Command);
 	}
 }
@@ -115,80 +127,117 @@ int main(int argc, char* argv[]) {
 	FILE* SymbolsFile;
 	FILE* DebugFile;
 	FILE* StateLog;
-        int i=0;
 	logic TraceExecution;
-        word InstructionAddress;
+	word InstructionAddress;
 	char Mnemonic[MAX_NAME];
-        ProgramFile=SymbolsFile=DebugFile=StateLog=NULL;
-	SingleStepping=TRUE;
-	TraceExecution=FALSE;
-	for(i=1; i<argc; i++) {
-		if(!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
+
+	int i = 0;
+	ProgramFile = SymbolsFile = DebugFile = StateLog = NULL;
+	SingleStepping = TRUE;
+	TraceExecution = FALSE;
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "--help") ||
+			!strcmp(argv[i], "-h")) {
 			Usage(argv[0], NULL);
-		} else if(!strcmp(argv[i], "--trace") || !strcmp(argv[i], "-t")) {
-			TraceExecution=TRUE;
-		} else if(!strcmp(argv[i], "--symbols") || !strcmp(argv[i], "-s")) {
+		}
+		else if (!strcmp(argv[i], "--trace") ||
+			!strcmp(argv[i], "-t")) {
+			TraceExecution = TRUE;
+		}
+		else if (!strcmp(argv[i], "--symbols") ||
+			!strcmp(argv[i], "-s")) {
 			i++;
-			if(i==argc) Usage(argv[0], "Option '--symbols' requires a parameter");
-			SymbolsFile=fopen(argv[i], "r");
-			if(SymbolsFile==NULL) fprintf(stdout, "Could not open symbols file '%s'\n", argv[i]);
-		} else if(!strcmp(argv[i], "--dbg")) {
+			if (i == argc)
+				Usage(argv[0], "Option '--symbols' requires a parameter");
+			SymbolsFile = fopen(argv[i], "r");
+			if (SymbolsFile == NULL)
+				fprintf(stdout, "Could not open symbols file '%s'\n", argv[i]);
+		}
+		else if (!strcmp(argv[i], "--dbg")) {
 			i++;
-			if(i==argc) Usage(argv[0], "Option '--dbg' requires a parameter");
-			DebugFile=fopen(argv[i], "r");
-			if(DebugFile==NULL) fprintf(stdout, "Could not open debug file '%s'", argv[i]);
-		} else if(!strcmp(argv[i], "--statelog") || !strcmp(argv[i], "-l")) {
+			if (i == argc)
+				Usage(argv[0], "Option '--dbg' requires a parameter");
+			DebugFile = fopen(argv[i], "r");
+			if (DebugFile == NULL)
+				fprintf(stdout, "Could not open debug file '%s'", argv[i]);
+		}
+		else if (!strcmp(argv[i], "--statelog") ||
+			!strcmp(argv[i], "-l")) {
 			i++;
-			if(i==argc) Usage(argv[0], "Option '--statelog' requires a parameter");
-			StateLog=fopen(argv[i], "w");
-			if(StateLog==NULL) fprintf(stdout, "Could not open state log file '%s'\n", argv[i]);
-		} else if(argv[i][0]=='-') {
+			if (i == argc)
+				Usage(argv[0], "Option '--statelog' requires a parameter");
+			StateLog = fopen(argv[i], "w");
+			if (StateLog == NULL)
+				fprintf(stdout, "Could not open state log file '%s'\n", argv[i]);
+		}
+		else if (argv[i][0] == '-') {
 			char Error[MAX_STRING];
 			sprintf(Error, "Unknown option '%s'", argv[i]);
 			Usage(argv[0], Error);
-		} else {
-			ProgramFile=fopen(argv[i], "r");
-			if(ProgramFile==NULL) {
-				fprintf(stdout, "Could not open program file '%s'\n", argv[i+1]);
+		}
+		else {
+			ProgramFile = fopen(argv[i], "r");
+			if (ProgramFile == NULL) {
+				fprintf(stdout, "Could not open program file '%s'\n", argv[i + 1]);
 				Quit();
 			}
 		}
 	}
-	if(ProgramFile) {
-	        Init();
-                fprintf(stdout, "Loading program...\n");
+	if (ProgramFile) {
+		Init();
+		fprintf(stdout, "Loading program...\n");
 		LoadROM(ProgramFile);
 		fclose(ProgramFile);
-	} else Usage(argv[0], "A valid program file must be specified");
+	}
+	else
+		Usage(argv[0], "A valid program file must be specified");
+
 	InitSymbols();
-        if(SymbolsFile) {
+	if (SymbolsFile) {
 		fprintf(stdout, "Loading symbols...\n");
-        	LoadSymbols(SymbolsFile);
+		LoadSymbols(SymbolsFile);
 		fclose(SymbolsFile);
 	}
 	InitDebugger();
-	if(DebugFile) {
+	if (DebugFile) {
 		fprintf(stdout, "Loading debug information...\n");
 		LoadSourcePointers(DebugFile);
 		fclose(DebugFile);
 	}
-        InstructionAddress=0x0000;
-        fprintf(stdout, "Starting simulation...\n");
+
+	InstructionAddress = 0x0000;
+	fprintf(stdout, "Starting simulation...\n");
 	signal(SIGINT, Break);
-        for(;;) {
-		if(UserBreak==1) {
-			UserBreak=0;
-			SingleStepping=TRUE;
+	for (;;) {
+		if (UserBreak == 1) {
+			UserBreak = 0;
+			SingleStepping = TRUE;
+			Stop(InstructionAddress);
 		}
-                if(SingleStepping || BreakRequest()) SingleStepping=Debugger(); else {
-                        InstructionAddress=GetRegister(REG_PC);
-			if(TraceExecution) {
+		// Execute step command and show register state
+		if (SingleStepping || BreakRequest()) {
+			SingleStepping = Debugger();
+			TraceExecution = SingleStepping;
+			InstructionAddress = GetRegister(REG_PC);
+			if (TraceExecution) {
 				PrintRegisters(stdout);
 				fprintf(stdout, "  -  %04x: ", InstructionAddress);
-	                        Disassemble(&InstructionAddress, Mnemonic);
+				Disassemble(&InstructionAddress, Mnemonic);
 				fprintf(stdout, "%s\n", Mnemonic);
 			}
-			switch(Step()) {
+			Step();
+			continue;
+		}
+		// Run mode. Dump register state only if tracing.
+		else {
+			InstructionAddress = GetRegister(REG_PC);
+			if (TraceExecution) {
+				PrintRegisters(stdout);
+				fprintf(stdout, "  -  %04x: ", InstructionAddress);
+				Disassemble(&InstructionAddress, Mnemonic);
+				fprintf(stdout, "%s\n", Mnemonic);
+			}
+			switch (Step()) {
 			case TRAP_NONE:
 			case TRAP_NOEFFECT:
 				break;
@@ -209,8 +258,8 @@ int main(int argc, char* argv[]) {
 				Stop(InstructionAddress);
 				break;
 			}
-			if(GetFrame()%1000==0) RaiseIRQ();
-                        if(StateLog) SnapshotState(StateLog);
-                }
-        }
+			if (GetFrame() % 1000 == 0) RaiseIRQ();
+			if (StateLog) SnapshotState(StateLog);
+		}
+	}
 }

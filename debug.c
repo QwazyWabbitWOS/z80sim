@@ -8,6 +8,7 @@
 #include "symbols.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define CMD_INFO     1
 #define CMD_RUN      2
@@ -23,6 +24,7 @@
 #define CMD_ENABLE  12
 #define CMD_DISABLE 13
 #define CMD_HELP    14
+#define CMD_RESET   15
 
 #define CMD_INFO_WATCHPOINTS 100
 #define CMD_INFO_WARRANTY    101
@@ -41,15 +43,16 @@
 #define LEX_NAME             "name"
 #define LEX_ENABLE           "enable"
 #define LEX_DISABLE          "disable"
+#define LEX_RESET            "reset"
 #define LEX_INFO_WATCHPOINTS "watchpoints"
 #define LEX_INFO_WARRANTY    "warranty"
 
 static tokens* DebugTokens;
 
-static logic StopAtNextCLine=FALSE;
+static logic StopAtNextCLine = FALSE;
 
 void PrintValue(FILE* Handle, word Value) {
-	if(Value>9) fprintf(Handle, "0x%04x", Value);
+	if (Value > 9) fprintf(Handle, "0x%04x", Value);
 	else fprintf(Handle, "%d", Value);
 }
 
@@ -57,13 +60,13 @@ void Input(const char* Prompt, char* UserString) {
 	fprintf(stdout, "%s", Prompt);
 	fflush(stdout);
 	fgets(UserString, MAX_STRING, stdin);
-	UserString[strlen(UserString)-1]='\0';
+	UserString[strlen(UserString) - 1] = '\0';
 }
 
-void InitDebugger() {
+void InitDebugger(void) {
 	InitParser();
 	InitWatchpoints();
-	DebugTokens=CreateTokenTable();
+	DebugTokens = CreateTokenTable();
 	CreateToken(DebugTokens, " ", 0);
 	// Debugger commands
 	CreateToken(DebugTokens, LEX_QUIT, CMD_QUIT);
@@ -80,21 +83,25 @@ void InitDebugger() {
 	CreateToken(DebugTokens, LEX_NAME, CMD_NAME);
 	CreateToken(DebugTokens, LEX_ENABLE, CMD_ENABLE);
 	CreateToken(DebugTokens, LEX_DISABLE, CMD_DISABLE);
+	CreateToken(DebugTokens, LEX_RESET, CMD_RESET);
 	// Command parameters
 	CreateToken(DebugTokens, LEX_INFO_WATCHPOINTS, CMD_INFO_WATCHPOINTS);
 	CreateToken(DebugTokens, LEX_INFO_WARRANTY, CMD_INFO_WARRANTY);
 }
 
-logic BreakRequest() {
-	static logic OldLineSkipped=FALSE;
-	if(StopAtNextCLine) {
-		if(OldLineSkipped && HasSource(GetRegister(REG_PC))) {
-			StopAtNextCLine=FALSE;
-			OldLineSkipped=FALSE;
+logic BreakRequest(void)
+{
+	static logic OldLineSkipped = FALSE;
+	if (StopAtNextCLine) {
+		if (OldLineSkipped && HasSource(GetRegister(REG_PC)))
+		{
+			StopAtNextCLine = FALSE;
+			OldLineSkipped = FALSE;
 			return TRUE;
-		} else OldLineSkipped=TRUE;
+		}
+		else OldLineSkipped = TRUE;
 	}
-	if(CheckWatchpoints()!=NULL) return TRUE;
+	if (CheckWatchpoints() != NULL) return TRUE;
 	return FALSE;
 }
 
@@ -123,14 +130,14 @@ void ExecuteInfoWarranty() {
 void ExecuteInfo(const char* Parameters) {
 	char Lexeme[MAX_STRING];
 	int Token;
-	const char* OtherSymbols=Parameters;
-	while((Token=ExtractToken(DebugTokens, &OtherSymbols, Lexeme, TRUE))==0) {
-		if(strlen(Lexeme)==0) {
+	const char* OtherSymbols = Parameters;
+	while ((Token = ExtractToken(DebugTokens, &OtherSymbols, Lexeme, TRUE)) == 0) {
+		if (strlen(Lexeme) == 0) {
 			fprintf(stdout, "Info on what?\n");
 			return;
 		}
 	}
-	switch(Token) {
+	switch (Token) {
 	case CMD_INFO_WATCHPOINTS:
 		ListWatchpoints(stdout);
 		break;
@@ -144,145 +151,177 @@ void ExecuteInfo(const char* Parameters) {
 
 void ExecuteWatch(const char* Parameters) {
 	operation* Watchpoint;
-	Watchpoint=ParseExpression(Parameters);
-	if(Watchpoint==NULL) {
+	Watchpoint = ParseExpression(Parameters);
+	if (Watchpoint == NULL) {
 		fprintf(stdout, "A parse error in expression.\n");
-	} else {
+	}
+	else {
 		char Expression[MAX_STRING];
 		StringifyExpression(Watchpoint, Expression);
-		fprintf(stdout, "Watchpoint %d: %s (currently 0x%04x)\n", AddWatchpoint(Watchpoint, TRUE), Expression, EvaluateExpression(Watchpoint));
+		fprintf(stdout, "Watchpoint %d: %s (currently 0x%04x)\n",
+			AddWatchpoint(Watchpoint, TRUE), Expression, EvaluateExpression(Watchpoint));
 	}
 }
 
 void ExecuteEval(const char* Parameters) {
 	operation* Representation;
-        Representation=ParseExpression(Parameters);
-        if(Representation==NULL) {
-                fprintf(stdout, "A parse error in expression.\n");
-        } else {
-                char Expression[MAX_STRING];
-                StringifyExpression(Representation, Expression);
-                fprintf(stdout, "%s evaluates to ", Expression);
+	Representation = ParseExpression(Parameters);
+	if (Representation == NULL) {
+		fprintf(stdout, "A parse error in expression.\n");
+	} else {
+		char Expression[MAX_STRING];
+		StringifyExpression(Representation, Expression);
+		fprintf(stdout, "%s evaluates to ", Expression);
 		PrintValue(stdout, EvaluateExpression(Representation)); fprintf(stdout, "\n");
-                FreeExpression(Representation);
-        }
+		FreeExpression(Representation);
+	}
 }
 
+// Disassemble from Start to End both addresses required.
 void ExecuteDisasm(const char* Parameters) {
 	char StartStr[MAX_STRING], EndStr[MAX_STRING];
-	const char *OtherTokens=Parameters;
-	if(!ExtractFreeform(DebugTokens, &OtherTokens, StartStr) || !ExtractFreeform(DebugTokens, &OtherTokens, EndStr)) {
-                fprintf(stdout, "Syntax: disasm <start-addr> [<end-addr>]\n");
+	const char *OtherTokens = Parameters;
+	if (!ExtractFreeform(DebugTokens, &OtherTokens, StartStr) ||
+		!ExtractFreeform(DebugTokens, &OtherTokens, EndStr))
+	{
+		fprintf(stdout, "Syntax: disasm <start-addr> <end-addr>\n");
 		return;
-	} else {
-	        word Start=strtol(StartStr, NULL, 0);
-        	word End=strtol(EndStr, NULL, 0);
-        	word i;
-        	if(strlen(EndStr)==0) End=Start+1;
-        	i=Start; while(i<=End) {
+	}
+	else {
+		word Start = (word)strtol(StartStr, NULL, 0);
+		word End = (word)strtol(EndStr, NULL, 0);
+		word i;
+		if (End <= Start)
+			End = Start + 1;
+		i = Start;
+		while (i <= End)
+		{
 			char Mnemonic[MAX_STRING];
-        		fprintf(stdout, "%04x: ", i);
-                        Disassemble(&i, Mnemonic);
-                        fprintf(stdout, "%s\n", Mnemonic);
-                }
+			fprintf(stdout, "%04x: ", i);
+			Disassemble(&i, Mnemonic);
+			fprintf(stdout, "%s\n", Mnemonic);
+		}
 	}
 }
 
 void ExecuteStack(const char* Parameters) {
 	char DepthStr[MAX_NAME];
-        word Start, End;
-        word i;
-        Start=GetRegister(REG_SP);
-        if(!ExtractFreeform(DebugTokens, &Parameters, DepthStr)) End=Start+3; else End=Start+strtol(DepthStr, NULL, 0);
-        fprintf(stdout, "%04x: %04x  <- SP\n", Start, GetMemoryWord(Start));
-        for(i=Start+1; i<End; i+=2) {
-                fprintf(stdout, "%04x: %04x\n", i, GetMemoryWord(i));
-        }
+	word Start, End;
+	word i;
+	Start = GetRegister(REG_SP);
+	if (!ExtractFreeform(DebugTokens, &Parameters, DepthStr))
+		End = Start + 3;
+	else
+		End = Start + (word)strtol(DepthStr, NULL, 0);
+	fprintf(stdout, "%04x: %04x  <- SP\n", Start, GetMemoryWord(Start));
+	for (i = Start + 1; i < End; i += 2) {
+		fprintf(stdout, "%04x: %04x\n", i, GetMemoryWord(i));
+	}
 }
 
 void ExecuteName(const char* Parameters) {
 	char AddrStr[MAX_STRING];
-        char Symbol[MAX_NAME];
-	if(!ExtractFreeform(DebugTokens, &Parameters, AddrStr)) {
-                fprintf(stdout, "Syntax: name <addr>\n");
-        } else {
-                word Addr=strtol(AddrStr, NULL, 0);
-                if(LookupSymbol(Addr, Symbol)) {
-                        fprintf(stdout, "Symbol: '%s'\n", Symbol);
-                } else if(SearchSymbol(Addr, Symbol)) {
-                        fprintf(stdout, "Nearest symbol: '%s'\n", Symbol);
-                } else fprintf(stdout, "No symbol found\n");
-        }
+	char Symbol[MAX_NAME];
+	if (!ExtractFreeform(DebugTokens, &Parameters, AddrStr)) {
+		fprintf(stdout, "Syntax: name <addr>\n");
+	}
+	else {
+		word Addr = (word)strtol(AddrStr, NULL, 0);
+		if (LookupSymbol(Addr, Symbol)) {
+			fprintf(stdout, "Symbol: '%s'\n", Symbol);
+		}
+		else if (SearchSymbol(Addr, Symbol)) {
+			fprintf(stdout, "Nearest symbol: '%s'\n", Symbol);
+		}
+		else fprintf(stdout, "No symbol found\n");
+	}
 }
 
 void ExecuteEnable(const char* Parameters) {
 	char NumberStr[MAX_STRING];
-	while(ExtractFreeform(DebugTokens, &Parameters, NumberStr)) {
-		short Number=strtol(NumberStr, NULL, 0);
-		if(ExistsWatchpoint(Number)) {
+	while (ExtractFreeform(DebugTokens, &Parameters, NumberStr)) {
+		short Number = (word)strtol(NumberStr, NULL, 0);
+		if (ExistsWatchpoint(Number)) {
 			WatchpointActivation(Number, TRUE);
-		} else {
-			fprintf(stdout, "Watchpoing %d does not exist\n", Number);
+		}
+		else {
+			fprintf(stdout, "Watchpoint %d does not exist\n", Number);
 		}
 	}
 }
 
 void ExecuteDisable(const char* Parameters) {
 	char NumberStr[MAX_STRING];
-        while(ExtractFreeform(DebugTokens, &Parameters, NumberStr)) {
-                short Number=strtol(NumberStr, NULL, 0);
-                if(ExistsWatchpoint(Number)) {
-                        WatchpointActivation(Number, FALSE);
-                } else {
-                        fprintf(stdout, "Watchpoing %d does not exist\n", Number);
-                }
-        }
+	while (ExtractFreeform(DebugTokens, &Parameters, NumberStr)) {
+		short Number = (short)strtol(NumberStr, NULL, 0);
+		if (ExistsWatchpoint(Number)) {
+			WatchpointActivation(Number, FALSE);
+		}
+		else {
+			fprintf(stdout, "Watchpoint %d does not exist\n", Number);
+		}
+	}
 }
 
 
 logic Debugger() {
 	watchpoint* Watch;
-	while(NULL!=(Watch=CheckWatchpoints())) {
+	word InstructionAddress;
+	char Mnemonic[MAX_NAME];
+
+	while (NULL != (Watch = CheckWatchpoints())) {
 		char Expression[MAX_STRING];
-                StringifyExpression(Watch->Trigger, Expression);
-                fprintf(stdout, "\nBREAK: %s has changed value\n", Expression);
-                fprintf(stdout, "Old value: ");
+		StringifyExpression(Watch->Trigger, Expression);
+		fprintf(stdout, "\nBREAK: %s has changed value\n", Expression);
+		fprintf(stdout, "Old value: ");
 		PrintValue(stdout, Watch->StableValue); fprintf(stdout, "\n");
-                fprintf(stdout, "New value: ");
-		PrintValue(stdout, Watch->StableValue=EvaluateExpression(Watch->Trigger)); fprintf(stdout, "\n");
+		fprintf(stdout, "New value: ");
+		PrintValue(stdout, Watch->StableValue = EvaluateExpression(Watch->Trigger));
+		fprintf(stdout, "\n");
+
+		// Dump state at the breakpoint
+		InstructionAddress = GetRegister(REG_PC);
+		PrintRegisters(stdout);
+		fprintf(stdout, "  -  %04x: ", InstructionAddress);
+		Disassemble(&InstructionAddress, Mnemonic);
+		fprintf(stdout, "%s\n", Mnemonic);
 	}
 	{
-                source SourceSpec=SearchSource(GetRegister(REG_PC));
-                if(SourceSpec.File!=NULL) {
-                        char SourceLine[MAX_STRING];
-                        ReadFileLine(SourceSpec.File, SourceSpec.Line, SourceLine);
-                        fprintf(stdout, "%d %s\n", SourceSpec.Line, SourceLine);
-                }
+		source SourceSpec = SearchSource(GetRegister(REG_PC));
+		if (SourceSpec.File != NULL) {
+			char SourceLine[MAX_STRING];
+			ReadFileLine(SourceSpec.File, SourceSpec.Line, SourceLine);
+			fprintf(stdout, "%d %s\n", SourceSpec.Line, SourceLine);
+		}
 	}
-	for(;;) {
+	for (;;) {
 		char CommandLine[MAX_STRING];
 		char Token[MAX_STRING];
-		const char* OtherTokens=CommandLine;
+		const char* OtherTokens = CommandLine;
 		Input("$ ", CommandLine);
-		switch(ExtractToken(DebugTokens, &OtherTokens, Token, TRUE)) {
+		switch (ExtractToken(DebugTokens, &OtherTokens, Token, TRUE)) {
 		case CMD_QUIT:
 			exit(0);
 		case CMD_HELP:
-			fprintf(stdout, "\t%s\n", LEX_QUIT);
-			fprintf(stdout, "\t%s\n", LEX_INFO);
-			fprintf(stdout, "\t%s\n", LEX_RUN);
-			fprintf(stdout, "\t%s\n", LEX_STEP);
-			fprintf(stdout, "\t%s\n", LEX_STEPI);
-			fprintf(stdout, "\t%s\n", LEX_WATCH);
-			fprintf(stdout, "\t%s\n", LEX_EVAL);
-			fprintf(stdout, "\t%s\n", LEX_DISASM);
-			fprintf(stdout, "\t%s\n", LEX_STACK);
-			fprintf(stdout, "\t%s\n", LEX_IRQ);
-			fprintf(stdout, "\t%s\n", LEX_NAME);
-			fprintf(stdout, "\t%s\n", LEX_ENABLE);
-			fprintf(stdout, "\t%s\n", LEX_DISABLE);
+			fprintf(stdout, "\t%s\t%s\n", LEX_QUIT, "Quit the simulator");
+			fprintf(stdout, "\t%s\t%s\n", LEX_INFO, "Get info on...");
+			fprintf(stdout, "\t%s\t%s\n", LEX_RUN, "Run the simulation at speed");
+			fprintf(stdout, "\t%s\t%s\n", LEX_STEP, "Single-step the next opcode");
+			fprintf(stdout, "\t%s\t%s\n", LEX_STEPI, "Single-step the next C line");
+			fprintf(stdout, "\t%s\t%s\n", LEX_WATCH, "Set watchpoint");
+			fprintf(stdout, "\t%s\t%s\n", LEX_EVAL, "Evaluate expression [<expression>]");
+			fprintf(stdout, "\t%s\t%s\n", LEX_DISASM, "Disassemble ("LEX_DISASM" addr addr)");
+			fprintf(stdout, "\t%s\t%s\n", LEX_STACK, "Display stack pointer ("LEX_STACK" [<expression>])");
+			fprintf(stdout, "\t%s\t%s\n", LEX_IRQ, "");
+			fprintf(stdout, "\t%s\t%s\n", LEX_NAME, "");
+			fprintf(stdout, "\t%s\t%s\n", LEX_ENABLE, "");
+			fprintf(stdout, "\t%s\t%s\n", LEX_DISABLE, "");
+			fprintf(stdout, "\t%s\t%s\n", LEX_RESET, "Reset the CPU");
 			fprintf(stdout, "\tinfo %s\n", LEX_INFO_WATCHPOINTS);
 			fprintf(stdout, "\tinfo %s\n", LEX_INFO_WARRANTY);
+			break;
+		case CMD_INFO:
+			ExecuteInfo(OtherTokens);
 			break;
 		case CMD_RUN:
 			fprintf(stdout, "Resuming execution\n\n");
@@ -290,14 +329,11 @@ logic Debugger() {
 		case CMD_STEP:
 			return TRUE;
 		case CMD_STEPI:
-			StopAtNextCLine=TRUE;
+			StopAtNextCLine = TRUE;
 			return FALSE;
-		case CMD_INFO:
-			ExecuteInfo(OtherTokens);
-			break;
 		case CMD_WATCH:
 			ExecuteWatch(OtherTokens);
-              		break;
+			break;
 		case CMD_EVAL:
 			ExecuteEval(OtherTokens);
 			break;
@@ -315,6 +351,9 @@ logic Debugger() {
 			break;
 		case CMD_DISABLE:
 			ExecuteDisable(OtherTokens);
+			break;
+		case CMD_RESET:		//power-on reset the Z80
+			Reset();
 			break;
 		default:
 			fprintf(stdout, "Unknown command.\n");

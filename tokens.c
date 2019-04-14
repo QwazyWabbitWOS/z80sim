@@ -19,9 +19,9 @@
 
 #include "tokens.h"
 
+#include <string.h>
 #include <stdlib.h>
 #include <limits.h>
-
 #include <assert.h>
 
 struct Tokens {
@@ -32,10 +32,11 @@ struct Tokens {
 tokens* NewTree() {
 	tokens* Tree;
 	int i;
-	Tree=malloc(sizeof(tokens));
-	if(Tree!=NULL) {
-		for(i=0; i<UCHAR_MAX; i++) Tree->Characters[i]=NULL;
-		Tree->TokenId=0;
+	Tree = malloc(sizeof(tokens));
+	if (Tree != NULL) {
+		for (i = 0; i < UCHAR_MAX; i++)
+			Tree->Characters[i] = NULL;
+		Tree->TokenId = 0;
 	}
 	return Tree;
 }
@@ -45,62 +46,71 @@ tokens* CreateTokenTable() {
 }
 
 void CreateToken(tokens* Branch, const char* Lexeme, int Id) {
-	int i;
+	size_t i;
 	assert(Branch && Lexeme);
-	for(i=0; i<strlen(Lexeme); i++) {
-		if(Branch->Characters[Lexeme[i]]==NULL) Branch->Characters[Lexeme[i]]=NewTree();
-		Branch=Branch->Characters[Lexeme[i]];
+	for (i = 0; i < strlen(Lexeme); i++) {
+		if (Branch->Characters[Lexeme[i]] == NULL)
+			Branch->Characters[Lexeme[i]] = NewTree();
+		Branch = Branch->Characters[Lexeme[i]];
 	}
-	Branch->TokenId=Id;
+	Branch->TokenId = Id;
 }
 
 int ExtractToken(const tokens* Branch, const char** Expression, char* Lexeme, logic Completion) {
-	const char* String=*Expression;
-	int i;
+	const char* String = *Expression;
+	size_t i;
 	assert(Branch && Expression && *Expression);
-	for(i=0; i<strlen(String); i++) {
-		if(Branch->Characters[String[i]]==NULL) break;
-                Branch=Branch->Characters[String[i]];
-		if(Lexeme!=NULL) Lexeme[i]=String[i];
+	for (i = 0; i < strlen(String); i++) {
+		if (Branch->Characters[String[i]] == NULL)
+			break;
+		Branch = Branch->Characters[String[i]];
+		if (Lexeme != NULL)
+			Lexeme[i] = String[i];
 	}
-        *Expression+=i;
-	if(Branch->TokenId==0 && Completion) {
+	*Expression += i;
+	if (Branch->TokenId == 0 && Completion) {
 		int BranchesFound;
 		int Attempt;
 		char TakenBranch;
 		do {
-			BranchesFound=0;
-			for(Attempt=0; Attempt<UCHAR_MAX; Attempt++) {
-				if(Branch->TokenId==0 && Branch->Characters[Attempt]!=NULL) {
+			BranchesFound = 0;
+			for (Attempt = 0; Attempt < UCHAR_MAX; Attempt++) {
+				if (Branch->TokenId == 0 && Branch->Characters[Attempt] != NULL) {
 					BranchesFound++;
-					TakenBranch=(char)Attempt;
+					TakenBranch = (char)Attempt;
 				}
-				if(BranchesFound>1) break;
+				if (BranchesFound > 1)
+					break;
 			}
-			if(BranchesFound==1) {
-				Branch=Branch->Characters[TakenBranch];
-				if(Lexeme!=NULL) Lexeme[i++]=TakenBranch;
+			if (BranchesFound == 1) {
+				Branch = Branch->Characters[TakenBranch];
+				if (Lexeme != NULL)
+					Lexeme[i++] = TakenBranch;
 			}
-		} while(BranchesFound==1);
+		} while (BranchesFound == 1);
 	}
-	if(Lexeme!=NULL) Lexeme[i]='\0';
+	if (Lexeme != NULL) 
+		Lexeme[i] = '\0';
 	return Branch->TokenId;
 }
 
-logic ExtractFreeform(const tokens* Branch, const char** Expression, char* Freeform) {
-	int i;
+logic ExtractFreeform(const tokens* Branch, const char** Expression, char* Freeform)
+{
+	size_t i;
 	assert(Branch && Expression && *Expression && Freeform);
-	while(ExtractToken(Branch, Expression, Freeform, FALSE)==0 && strlen(Freeform)!=0);
-	for(i=0; i<strlen(*Expression); i++) {
+	while (ExtractToken(Branch, Expression, Freeform, FALSE) == 0 && strlen(Freeform) != 0);
+	for (i = 0; i < strlen(*Expression); i++) {
 		int Id;
 		const char* TrimmedExpression;
-		TrimmedExpression=&(*Expression)[i];
-		Id=ExtractToken(Branch, &TrimmedExpression, NULL, FALSE);
-		if(&(*Expression)[i]!=TrimmedExpression) break;
-		assert(Id==0);
-		if(Freeform!=NULL) Freeform[i]=(*Expression)[i];
+		TrimmedExpression = &(*Expression)[i];
+		Id = ExtractToken(Branch, &TrimmedExpression, NULL, FALSE);
+		if (&(*Expression)[i] != TrimmedExpression)
+			break;
+		assert(Id == 0);
+		if (Freeform != NULL)
+			Freeform[i] = (*Expression)[i];
 	}
-	*Expression+=i;
-	Freeform[i]='\0';
-	if(i>0) return TRUE; else return FALSE;
+	*Expression += i;
+	Freeform[i] = '\0';
+	if (i > 0) return TRUE; else return FALSE;
 }

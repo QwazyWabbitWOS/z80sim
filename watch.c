@@ -27,55 +27,59 @@
 #define MAX_WATCHPOINTS 256
 
 
-typedef struct {
-        watchpoint Elements[MAX_WATCHPOINTS];
-        short Count;
+typedef struct
+{
+	watchpoint Elements[MAX_WATCHPOINTS];
+	short Count;
 } watchpoints;
 
 watchpoints Watchpoints;
 
 
 void InitWatchpoints() {
-	Watchpoints.Count=1;
+	Watchpoints.Count = 1;
 }
 
 short AddWatchpoint(operation* Watchpoint, logic Enabled) {
-        assert(Watchpoint!=NULL);
-        Watchpoints.Elements[Watchpoints.Count].Trigger=Watchpoint;
-        Watchpoints.Elements[Watchpoints.Count].StableValue=EvaluateExpression(Watchpoint);
-        Watchpoints.Elements[Watchpoints.Count].Active=Enabled;
-        return Watchpoints.Count++;
+	assert(Watchpoint != NULL);
+	Watchpoints.Elements[Watchpoints.Count].Trigger = Watchpoint;
+	Watchpoints.Elements[Watchpoints.Count].StableValue = EvaluateExpression(Watchpoint);
+	Watchpoints.Elements[Watchpoints.Count].Active = Enabled;
+	return Watchpoints.Count++;
 }
 
 void WatchpointActivation(short Number, logic Enabled) {
-	assert(Number<Watchpoints.Count);
-	Watchpoints.Elements[Number].Active=Enabled;
+	assert(Number < Watchpoints.Count);
+	Watchpoints.Elements[Number].Active = Enabled;
 }
 
 void ListWatchpoints(FILE* Handle) {
-        if(Watchpoints.Count<=1) {
-                fprintf(Handle, "No breakpoints or watchpoints.\n");
-        } else {
-                char Expression[MAX_STRING];
-                short i;
-                fprintf(Handle, "Num Type           Disp Enb What\n");
-                for(i=1; i<Watchpoints.Count; i++) {
-                        StringifyExpression(Watchpoints.Elements[i].Trigger, Expression);
-                        fprintf(Handle, "%-3d watchpoint     keep %c   %s\n", i, Watchpoints.Elements[i].Active?'y':'n', Expression);
-                }
-        }
+	if (Watchpoints.Count <= 1) {
+		fprintf(Handle, "No breakpoints or watchpoints.\n");
+	}
+	else {
+		char Expression[MAX_STRING];
+		short i;
+		fprintf(Handle, "Num Type           Disp Enb What\n");
+		for (i = 1; i < Watchpoints.Count; i++) {
+			StringifyExpression(Watchpoints.Elements[i].Trigger, Expression);
+			fprintf(Handle, "%-3d watchpoint     keep %c   %s\n",
+				i, Watchpoints.Elements[i].Active ? 'y' : 'n', Expression);
+		}
+	}
 }
 
 watchpoint* CheckWatchpoints() {
-        short i;
-        for(i=1; i<Watchpoints.Count; i++) {
-                word CurrentValue;
-                if(Watchpoints.Elements[i].Active) {
-                        CurrentValue=EvaluateExpression(Watchpoints.Elements[i].Trigger);
-                        if(CurrentValue!=Watchpoints.Elements[i].StableValue) return &(Watchpoints.Elements[i]);
-                }
-        }
-        return NULL;
+	short i;
+	for (i = 1; i < Watchpoints.Count; i++) {
+		word CurrentValue;
+		if (Watchpoints.Elements[i].Active) {
+			CurrentValue = EvaluateExpression(Watchpoints.Elements[i].Trigger);
+			if (CurrentValue != Watchpoints.Elements[i].StableValue)
+				return &(Watchpoints.Elements[i]);
+		}
+	}
+	return NULL;
 }
 
 logic ExistsWatchpoint(short Number) {

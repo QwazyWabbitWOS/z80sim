@@ -78,8 +78,8 @@ static struct {
 // by a result when an ACT_REDUCE is performed.
 
 static struct {
-        value Value[MAX_VALUES];
-        int Top;
+	value Value[MAX_VALUES];
+	int Top;
 } ValuesStack;
 
 
@@ -122,28 +122,28 @@ static terminal ParseToken(const char** Expression);
 #define R ACT_REDUCE
 #define A ACT_ACCEPT
 
-static action OperatorsTable[OperatorCount][OperatorCount]={
+static action OperatorsTable[OperatorCount][OperatorCount] = {
 /////////////////////////////////////////////////////////////////////////////////
 //  ?  §  (  )  *  s  +  -  &  |  ~  !  == != <  >  <= >=  //  Input  /  Stack //
 /////////////////////////////////////////////////////////////////////////////////
-   {N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N}, // ?  (None)        //
-   {N, A, S, R, S, S, S, S, S, S, S, S, S, S, S, S, S, S}, // §  (End)         //
-   {N, N, S, S, S, R, S, S, S, S, S, S, S, S, S, S, S, S}, // (  (LeftPar)     //
-   {N, R, N, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R}, // )  (RightPar)    //
-   {N, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R}, // *  (Dereference) //
-   {N, R, N, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R}, // s  (SymbolDeref) //
-   {N, R, S, R, S, R, R, R, S, S, S, S, R, R, R, R, R, R}, // +  (Sum)         //
-   {N, R, S, R, S, R, R, R, S, S, S, S, R, R, R, R, R, R}, // -  (Subtract)    //
-   {N, R, S, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R}, // &  (And)         //
-   {N, R, S, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R}, // |  (Or)          //
-   {N, R, S, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R}, // ~  (XOr)         //
-   {N, R, S, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R}, // !  (Not)         //
-   {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // =  (Equal)       //
-   {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // != (NotEqual)    //
-   {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // <  (Smaller)     //
-   {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // >  (Greater)     //
-   {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // <= (SmallerOrEq) //
-   {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // >= (GreaterOrEq) //
+    {N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N}, // ?  (None)        //
+    {N, A, S, R, S, S, S, S, S, S, S, S, S, S, S, S, S, S}, // §  (End)         //
+    {N, N, S, S, S, R, S, S, S, S, S, S, S, S, S, S, S, S}, // (  (LeftPar)     //
+    {N, R, N, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R}, // )  (RightPar)    //
+    {N, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R}, // *  (Dereference) //
+    {N, R, N, R, R, R, R, R, R, R, R, R, R, R, R, R, R, R}, // s  (SymbolDeref) //
+    {N, R, S, R, S, R, R, R, S, S, S, S, R, R, R, R, R, R}, // +  (Sum)         //
+    {N, R, S, R, S, R, R, R, S, S, S, S, R, R, R, R, R, R}, // -  (Subtract)    //
+    {N, R, S, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R}, // &  (And)         //
+    {N, R, S, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R}, // |  (Or)          //
+    {N, R, S, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R}, // ~  (XOr)         //
+    {N, R, S, R, S, R, R, R, R, R, R, R, R, R, R, R, R, R}, // !  (Not)         //
+    {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // =  (Equal)       //
+    {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // != (NotEqual)    //
+    {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // <  (Smaller)     //
+    {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // >  (Greater)     //
+    {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // <= (SmallerOrEq) //
+    {N, R, S, R, S, R, S, S, S, S, S, S, R, R, R, R, R, R}, // >= (GreaterOrEq) //
 /////////////////////////////////////////////////////////////////////////////////
 };
 
@@ -159,7 +159,7 @@ static tokens* RegTokens;
 
 
 void InitParser() {
-	OpTokens=CreateTokenTable();
+	OpTokens = CreateTokenTable();
 	CreateToken(OpTokens, " ", 0);
 	CreateToken(OpTokens, "(", OP_LEFTPAR);
 	CreateToken(OpTokens, ")", OP_RIGHTPAR);
@@ -175,12 +175,13 @@ void InitParser() {
 	CreateToken(OpTokens, ">", OP_GREATER);
 	CreateToken(OpTokens, "<=", OP_SMALLEROREQ);
 	CreateToken(OpTokens, ">=", OP_GREATEROREQ);
-        RegTokens=CreateTokenTable();
+	RegTokens = CreateTokenTable();
 	CreateToken(RegTokens, " ", 0);
 	CreateToken(RegTokens, "$AF", REG_AF);
 	CreateToken(RegTokens, "$BC", REG_BC);
 	CreateToken(RegTokens, "$DE", REG_DE);
 	CreateToken(RegTokens, "$HL", REG_HL);
+	CreateToken(RegTokens, "$IR", REG_IR);
 	CreateToken(RegTokens, "$IX", REG_IX);
 	CreateToken(RegTokens, "$IY", REG_IY);
 	CreateToken(RegTokens, "$PC", REG_PC);
@@ -188,165 +189,184 @@ void InitParser() {
 }
 
 void InitOperatorsStack() {
-	OperatorsStack.Top=0;
+	OperatorsStack.Top = 0;
 }
 
 void InitValuesStack() {
-	ValuesStack.Top=0;
+	ValuesStack.Top = 0;
 }
 
 void PushOperatorsStack(operator Op) {
-	assert(OperatorsStack.Top<MAX_OPERATORS);
-	OperatorsStack.Value[OperatorsStack.Top++]=Op;
+	assert(OperatorsStack.Top < MAX_OPERATORS);
+	OperatorsStack.Value[OperatorsStack.Top++] = Op;
 }
 
 void PushValuesStack(value Val) {
-        assert(ValuesStack.Top<MAX_VALUES);
-	ValuesStack.Value[ValuesStack.Top++]=Val;
+	assert(ValuesStack.Top < MAX_VALUES);
+	ValuesStack.Value[ValuesStack.Top++] = Val;
 }
 
 operator PopOperatorsStack() {
-	assert(OperatorsStack.Top>0);
+	assert(OperatorsStack.Top > 0);
 	return OperatorsStack.Value[--OperatorsStack.Top];
 }
 
 value PopValuesStack() {
-	assert(ValuesStack.Top>0);
+	assert(ValuesStack.Top > 0);
 	return ValuesStack.Value[--ValuesStack.Top];
 }
 
 operator PeekOperatorsStack() {
-	assert(OperatorsStack.Top>0);
-	return OperatorsStack.Value[OperatorsStack.Top-1];
+	assert(OperatorsStack.Top > 0);
+	return OperatorsStack.Value[OperatorsStack.Top - 1];
 }
 
 value PeekValuesStack() {
-	assert(ValuesStack.Top>0);
-	return ValuesStack.Value[ValuesStack.Top-1];
+	assert(ValuesStack.Top > 0);
+	return ValuesStack.Value[ValuesStack.Top - 1];
 }
 
 terminal ParseToken(const char** Expression) {
 	operator Operator;
 	value Value;
 	terminal Terminal;
-	Operator=OP_NONE;
-	Value.Type=VAL_NONE;
-	Operator=ExtractToken(OpTokens, Expression, NULL, FALSE);
-	if(Operator==OP_NONE) {
-		if((*Expression)[0]=='\0') Operator=OP_END; else {
-	                Value.Contents.Register=ExtractToken(RegTokens, Expression, NULL, FALSE);
-			if(Value.Contents.Register!=REG_NONE) Value.Type=VAL_REGISTER; else {
+	Operator = OP_NONE;
+	Value.Type = VAL_NONE;
+	
+	Operator = ExtractToken(OpTokens, Expression, NULL, FALSE);
+	
+	if (Operator == OP_NONE) {
+		if ((*Expression)[0] == '\0')
+			Operator = OP_END;
+		else
+		{
+			Value.Contents.Register = ExtractToken(RegTokens, Expression, NULL, FALSE);
+			if (Value.Contents.Register != REG_NONE)
+				Value.Type = VAL_REGISTER;
+			else
+			{
 				char Symbol[MAX_STRING];
 				ExtractFreeform(OpTokens, Expression, Symbol);
-				if(isdigit((unsigned char)Symbol[0])) {
-       	                 		Value.Type=VAL_WORD;
-       	                 		Value.Contents.Word=(word)(strtol(Symbol, NULL, 0)%MAX_WORD);
-				} else if(ExistsSymbol(Symbol)) {
-					Value.Type=VAL_SYMBOL;
-       	                 		Value.Contents.Word=GetSymbol(Symbol);
-				} else {
-       	                 		fprintf(stderr, "Wrong value '%s'\n", Symbol);
-       	                 		Value.Type=VAL_NONE;
-       	        		}
+				if (isdigit((unsigned char)Symbol[0])) {
+					Value.Type = VAL_WORD;
+					Value.Contents.Word = (word)(strtol(Symbol, NULL, 0) % MAX_WORD);
+				}
+				else if (ExistsSymbol(Symbol)) {
+					Value.Type = VAL_SYMBOL;
+					Value.Contents.Word = GetSymbol(Symbol);
+				}
+				else {
+					fprintf(stderr, "Wrong value '%s'\n", Symbol);
+					Value.Type = VAL_NONE;
+				}
 			}
 		}
 	}
 	// Either we have a value or an operator. In both cases, we assign what we have to Terminal,
 	// which is what we'll return. If we have no value *and* no operator, something is wrong.
-	if(Value.Type!=VAL_NONE) {
-		Terminal.Type=TERM_VALUE;
-		Terminal.Contents.Value=Value;
-	} else if(Operator!=OP_NONE) {
-		Terminal.Type=TERM_OPERATOR;
-		Terminal.Contents.Operator=Operator;
-	} else Terminal.Type=TERM_NONE;
+	if (Value.Type != VAL_NONE) {
+		Terminal.Type = TERM_VALUE;
+		Terminal.Contents.Value = Value;
+	}
+	else if (Operator != OP_NONE) {
+		Terminal.Type = TERM_OPERATOR;
+		Terminal.Contents.Operator = Operator;
+	}
+	else Terminal.Type = TERM_NONE;
 	return Terminal;
 }
 
 operation* Reduce() {
 	// We'll put a value back in the stack. It can be a 'real' value, or a subexpression that cannot
 	// be evaluated at parsing time.
-        value Value;
+	value Value;
 	// We return a subexpression in any case; if we can actually compute a real value, the
 	// subexpression consists of the operator OP_NONE and of the real value in Operands[0].
-	operation* Subexpression=malloc(sizeof(operation));
-	if(Subexpression==NULL) return NULL;
-	Subexpression->Operator=PopOperatorsStack();
-	switch(Subexpression->Operator) {
+	operation* Subexpression = malloc(sizeof(operation));
+	if (Subexpression == NULL)
+		return NULL;
+	Subexpression->Operator = PopOperatorsStack();
+	switch (Subexpression->Operator) {
 	case OP_END:
-		Subexpression->Operator=OP_NONE;
-		Subexpression->Operands[0]=PopValuesStack();
-		if(ValuesStack.Top!=0) fprintf(stderr, "More than one value in stack at end of parsing\n");
+		Subexpression->Operator = OP_NONE;
+		Subexpression->Operands[0] = PopValuesStack();
+		if (ValuesStack.Top != 0)
+			fprintf(stderr, "More than one value in stack at end of parsing\n");
 		break;
 	case OP_RIGHTPAR:
-		assert(PopOperatorsStack()==OP_LEFTPAR);
+		assert(PopOperatorsStack() == OP_LEFTPAR);
 		break;
 	case OP_DEREFERENCE:
 	case OP_SYMBOL:
-		Subexpression->Operands[0]=PopValuesStack();
+		Subexpression->Operands[0] = PopValuesStack();
 		break;
 	case OP_SUM:
 	case OP_SUBTRACT:
 	case OP_EQUAL:
-        case OP_NOTEQUAL:
-        case OP_SMALLER:
-        case OP_GREATER:
+	case OP_NOTEQUAL:
+	case OP_SMALLER:
+	case OP_GREATER:
 	case OP_SMALLEROREQ:
 	case OP_GREATEROREQ:
-                Subexpression->Operands[1]=PopValuesStack();
-                Subexpression->Operands[0]=PopValuesStack();
+		Subexpression->Operands[1] = PopValuesStack();
+		Subexpression->Operands[0] = PopValuesStack();
 		break;
 	default:
 		fprintf(stderr, "Operator not implemented\n");
 		return NULL;
 	}
-	if(Subexpression->Operator==OP_NONE) {
-		Value.Type=VAL_WORD;
-		Value.Contents.Word=Subexpression->Operands[0].Contents.Word;
-	} else {
-		Value.Type=VAL_SUBEXPR;
-		Value.Contents.Subexpr=Subexpression;
+	if (Subexpression->Operator == OP_NONE) {
+		Value.Type = VAL_WORD;
+		Value.Contents.Word = Subexpression->Operands[0].Contents.Word;
+	}
+	else {
+		Value.Type = VAL_SUBEXPR;
+		Value.Contents.Subexpr = Subexpression;
 	}
 	PushValuesStack(Value);
 	return Subexpression;
 }
 
 operation* ParseExpression(char const* Expression) {
-	char Token[MAX_TOKEN]="";
+	char Token[MAX_TOKEN] = "";
 	terminal Terminal;
-	logic SyntaxError=FALSE;
-	operation* Representation=NULL;
+	logic SyntaxError = FALSE;
+	operation* Representation = NULL;
 	{
-		operator EndOperator=OP_END;
+		operator EndOperator = OP_END;
 		InitOperatorsStack();
 		InitValuesStack();
 		PushOperatorsStack(EndOperator);
 	}
-	Terminal.Type=TERM_EMPTY;
+	Terminal.Type = TERM_EMPTY;
 	do {
-		switch(Terminal.Type) {
+		switch (Terminal.Type) {
 		case TERM_EMPTY:
-                        Terminal=ParseToken(&Expression);
+			Terminal = ParseToken(&Expression);
 			break;
 		case TERM_VALUE:
 			PushValuesStack(Terminal.Contents.Value);
-                        if(Terminal.Contents.Value.Type==VAL_SYMBOL) {
-				Terminal.Type=TERM_OPERATOR;
-				Terminal.Contents.Operator=OP_SYMBOL;
-			} else Terminal.Type=TERM_EMPTY;
+			if (Terminal.Contents.Value.Type == VAL_SYMBOL) {
+				Terminal.Type = TERM_OPERATOR;
+				Terminal.Contents.Operator = OP_SYMBOL;
+			}
+			else Terminal.Type = TERM_EMPTY;
 			break;
 		case TERM_OPERATOR:
-			switch(OperatorsTable[PeekOperatorsStack()][Terminal.Contents.Operator]) {
+			switch (OperatorsTable[PeekOperatorsStack()][Terminal.Contents.Operator]) {
 			case ACT_SHIFT:
-				if(Terminal.Contents.Operator==OP_RIGHTPAR) assert(PopOperatorsStack()==OP_LEFTPAR);
-				else PushOperatorsStack(Terminal.Contents.Operator);
-				Terminal.Type=TERM_EMPTY;
+				if (Terminal.Contents.Operator == OP_RIGHTPAR)
+					assert(PopOperatorsStack() == OP_LEFTPAR);
+				else
+					PushOperatorsStack(Terminal.Contents.Operator);
+				Terminal.Type = TERM_EMPTY;
 				break;
 			case ACT_REDUCE:
-				Representation=Reduce();
+				Representation = Reduce();
 				break;
 			case ACT_ACCEPT:
-				if(Representation==NULL) Representation=Reduce();
+				if (Representation != NULL)
+					Representation = Reduce();
 				return Representation;
 			default:
 				fprintf(stdout, "Unknown action requested\n");
@@ -357,17 +377,20 @@ operation* ParseExpression(char const* Expression) {
 			fprintf(stdout, "No terminal symbol\n");
 			return NULL;
 		}
-	} while(!SyntaxError);
+	} while (!SyntaxError);
 	fprintf(stdout, "Syntax error\n");
 	return NULL;
 }
 
 logic FreeExpression(operation* Expr) {
 	int i;
-	if(Expr==NULL) return FALSE;
-	for(i=0; i<2; i++) {
-		if(Expr->Operands[i].Type==VAL_SUBEXPR) {
-			if(!FreeExpression(Expr->Operands[i].Contents.Subexpr)) return FALSE;
+	if (Expr == NULL)
+		return FALSE;
+	for (i = 0; i < 2; i++) {
+		if (Expr->Operands[i].Type == VAL_SUBEXPR)
+		{
+			if (!FreeExpression(Expr->Operands[i].Contents.Subexpr))
+				return FALSE;
 		}
 	}
 	free(Expr);
