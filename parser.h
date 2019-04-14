@@ -22,17 +22,18 @@
 
 #include "eval.h"
 
+void InitParser(void);
 
 // Parse an expression in its string form and return its representation
 // as a tree of 'operation's. THE RETURNED VALUE AND EVERY SUBEXPRESSION
 // IT REFERS TO MUST BE FREED BY THE USER.
-
+//
 operation* ParseExpression(char const* Expression);
 
 
 // Free the memory occupied by the representation of Expression. Return
 // FALSE if some subexpressions were NULL, otherwise TRUE.
-
+//
 logic FreeExpression(operation* Expression);
 
 #endif

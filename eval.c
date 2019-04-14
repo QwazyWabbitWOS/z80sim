@@ -22,13 +22,14 @@
 #include "types.h"
 #include "sizes.h"
 #include "cpu.h"
+#include "symbols.h"
 #include <stdio.h>
 
 #include "parser.h"
 #include <assert.h>
 #include <string.h>
 
-short OperandsTaken[OperatorCount]={
+short OperandsTaken[OperatorCount] = {
 	1,  // OP_NONE
 	1,  // OP_END
 	0,  // OP_LEFTPAR

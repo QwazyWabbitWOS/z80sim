@@ -64,8 +64,8 @@ short Protections[SIZE_MEMORY];
 byte IR;
 
 reg AF, SP, PC;
-reg BC, DE;
-reg HL, IX, IY;
+reg BC, DE, HL;
+reg IR, IX, IY;
 
 reg AF1;
 reg BC1, DE1;

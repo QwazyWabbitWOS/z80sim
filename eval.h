@@ -26,68 +26,71 @@
 // This structure is declared since we refer to it from the declaration of the type
 // 'value'. This is because the type 'operation', which will be defined later as this
 // structure, contains a reference to the type 'value'.
-
+//
 struct Operation;
 
 
 // A value can be either a word (an immediate value), a register (the value is that of the
 // register at the time of evaluation) or a subexpression (an operator and its operands).
 // VAL_NONE is used as an error condition.
-
+//
 typedef struct {
-        enum {
-                VAL_NONE,
-                VAL_SUBEXPR,
-                VAL_REGISTER,
-                VAL_WORD,
+	enum {
+		VAL_NONE,
+		VAL_SUBEXPR,
+		VAL_REGISTER,
+		VAL_WORD,
 		VAL_SYMBOL
-        } Type;
-        union {
-                regSpec Register;
-                word Word;
-                struct Operation* Subexpr;
-        } Contents;
+	} Type;
+	union {
+		regSpec Register;
+		word Word;
+		struct Operation* Subexpr;
+	} Contents;
 } value;
 
 
 // OP_NONE is an operator used for subexpressions that are actually direct values.
 // OperatorCount is not an operator, but is used to count how many operators there are.
-
+//
 typedef enum {
-        OP_NONE,
-        OP_END,
+	OP_NONE,
+	OP_END,
 	OP_LEFTPAR,
 	OP_RIGHTPAR,
-        OP_DEREFERENCE,
+		OP_DEREFERENCE,
 	OP_SYMBOL,
-        OP_SUM,
-        OP_SUBTRACT,
-        OP_AND,
-        OP_OR,
-        OP_XOR,
-        OP_NOT,
+		OP_SUM,
+		OP_SUBTRACT,
+		OP_AND,
+		OP_OR,
+		OP_XOR,
+		OP_NOT,
 	OP_EQUAL,
 	OP_NOTEQUAL,
 	OP_SMALLER,
 	OP_GREATER,
 	OP_SMALLEROREQ,
 	OP_GREATEROREQ,
-        OperatorCount
+		OperatorCount
 } operator;
 
 
 // An operation or subexpression is made by an operator and its operand (Operands[0]) or its
 // two operands (Operands[0] and Operands[1]).
-
-typedef struct Operation {
-        operator Operator;
-        value Operands[2];
+//
+typedef struct Operation 
+{
+	operator Operator;
+	value Operands[2];
 } operation;
 
 
 // Scan a representation Expression of an expression and put in StringForm a string that, if
 // parsed, would generate a representation equivalent to Expression.
-
+//
 logic StringifyExpression(operation* Expression, char* StringForm);
+
+word EvaluateExpression(operation* Expr);
 
 #endif

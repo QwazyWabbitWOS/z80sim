@@ -31,19 +31,21 @@ typedef enum {
 	REG_BC,
 	REG_DE,
 	REG_HL,
+	REG_IR,
 	REG_IX,
-	REG_IY
+	REG_IY,
 } regSpec;
 
 typedef enum {
-        TRAP_NONE,
-        TRAP_ILLEGAL,
-        TRAP_MEMORY,
-        TRAP_NOEFFECT,
+	TRAP_NONE,
+	TRAP_ILLEGAL,
+	TRAP_MEMORY,
+	TRAP_NOEFFECT,
 	TRAP_METACALL
 } trap;
 
-void Init(void);
+void Reset(void);	// Power-on reset Z80 state.
+void Init(void);	// Initialize the Z80 simulation.
 void LoadROM(FILE* Handle);
 trap Step(void);
 void Disassemble(word* Address, char *Mnemonic);
