@@ -36,5 +36,8 @@ logic HasSource(word Address);
 logic LookupSymbol(word Address, char* Name);
 logic ExistsSymbol(const char* Name);
 word GetSymbol(const char* Name);
+logic LookupSymbol(word Address, char* Name);
+logic LoadSourcePointers(FILE* Handle);
+logic LookupSymbol(word Address, char* Name);
 
 #endif
