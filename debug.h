@@ -7,6 +7,7 @@
 #include <string.h>
 
 logic Debugger(void);
+void ShowTrace(word Addr, char * Mnemonic);
 void InitDebugger(void);
 logic BreakRequest();
 void ReadFileLine(FILE* Handle, unsigned int Line, char* String);

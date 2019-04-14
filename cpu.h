@@ -44,8 +44,8 @@ typedef enum {
 	TRAP_METACALL
 } trap;
 
-void Reset(void);	// Power-on reset Z80 state.
-void Init(void);	// Initialize the Z80 simulation.
+void ResetCPU(void);	// Power-on reset Z80 state.
+void InitSimulation(void);
 void LoadROM(FILE* Handle);
 trap Step(void);
 void Disassemble(word* Address, char *Mnemonic);

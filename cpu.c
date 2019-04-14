@@ -227,7 +227,9 @@ void AddWord(word* Register, word Operand) {
 		FlagH = 1; else FlagH = 0;
 	*Register = (word)Sum;
 	if (Sum > 0xFFFF) 
-		FlagNC = !(FlagC = 1); else FlagC = !(FlagNC = 1);
+		FlagNC = !(FlagC = 1);
+	else
+		FlagC = !(FlagNC = 1);
 	FlagN = 0;
 	TStates += 11;
 }
@@ -562,7 +564,7 @@ void WriteIO(byte Port, byte Value) {
 }
 
 // Power-on reset Z80 state.
-void Reset(void)
+void ResetCPU(void)
 {
 	AF.Word = 0xffff;	//This is the documented reset state for AF
 	SP.Word = 0xffff;	//This is the documented reset state for SP
@@ -593,10 +595,10 @@ void Reset(void)
 }
 
 // Initialize the Z80 simulation.
-void Init() {
+void InitSimulation() {
 	int i;
 
-	Reset();
+	ResetCPU();
 	for (i = 0; i < 0x1000; i++) {
 		Memory[i] = 0x00; // rand();
 	}

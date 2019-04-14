@@ -94,34 +94,6 @@ void Stop(word Address) {
 	else fprintf(stdout, "(no C source line showable)\n");
 }
 
-#if 0
-
-void Debug(word* Address) {
-	char CommandLine[MAX_STRING];
-	char Command[MAX_NAME];
-	char* Arguments;
-	char Mnemonic[MAX_NAME];
-
-	fprintf(stdout, "$ ");
-	fgets(CommandLine, MAX_STRING, stdin);
-
-	do sscanf(CommandLine, "%s", Command);
-	while (strlen(Command) == 0);
-
-	Arguments = &CommandLine[strlen(Command) + 1];
-	if (!strcmp(Command, "irq")) {
-		RaiseIRQ();
-	}
-	else if (!strcmp(Command, "quit")) {
-		Quit();
-	}
-	else {
-		fprintf(stdout, "Invalid command '%s'\n", Command);
-	}
-}
-
-#endif
-
 int main(int argc, char* argv[]) {
 	FILE* ProgramFile;
 	FILE* SymbolsFile;
@@ -184,7 +156,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	if (ProgramFile) {
-		Init();
+		InitSimulation();
 		fprintf(stdout, "Loading program...\n");
 		LoadROM(ProgramFile);
 		fclose(ProgramFile);
@@ -198,6 +170,7 @@ int main(int argc, char* argv[]) {
 		LoadSymbols(SymbolsFile);
 		fclose(SymbolsFile);
 	}
+
 	InitDebugger();
 	if (DebugFile) {
 		fprintf(stdout, "Loading debug information...\n");
@@ -214,52 +187,42 @@ int main(int argc, char* argv[]) {
 			SingleStepping = TRUE;
 			Stop(InstructionAddress);
 		}
-		// Execute step command and show register state
 		if (SingleStepping || BreakRequest()) {
 			SingleStepping = Debugger();
-			TraceExecution = SingleStepping;
 			InstructionAddress = GetRegister(REG_PC);
-			if (TraceExecution) {
-				PrintRegisters(stdout);
-				fprintf(stdout, "  -  %04x: ", InstructionAddress);
-				Disassemble(&InstructionAddress, Mnemonic);
-				fprintf(stdout, "%s\n", Mnemonic);
-			}
-			Step();
-			continue;
+			ShowTrace(InstructionAddress, Mnemonic);
 		}
-		// Run mode. Dump register state only if tracing.
 		else {
 			InstructionAddress = GetRegister(REG_PC);
 			if (TraceExecution) {
-				PrintRegisters(stdout);
-				fprintf(stdout, "  -  %04x: ", InstructionAddress);
-				Disassemble(&InstructionAddress, Mnemonic);
-				fprintf(stdout, "%s\n", Mnemonic);
+				ShowTrace(InstructionAddress, Mnemonic);
 			}
-			switch (Step()) {
-			case TRAP_NONE:
-			case TRAP_NOEFFECT:
-				break;
-			case TRAP_METACALL:
-				fprintf(stdout, "\nTRAP: Metacall not implemented (illegal instruction)\n");
-				Stop(InstructionAddress);
-				break;
-			case TRAP_ILLEGAL:
-				fprintf(stdout, "\nTRAP: Illegal instruction executed\n");
-				Stop(InstructionAddress);
-				break;
-			case TRAP_MEMORY:
-				fprintf(stdout, "\nTRAP: Memory protection violation\n");
-				Stop(InstructionAddress);
-				break;
-			default:
-				fprintf(stdout, "\nTRAP: Unknown exception\n");
-				Stop(InstructionAddress);
-				break;
-			}
-			if (GetFrame() % 1000 == 0) RaiseIRQ();
-			if (StateLog) SnapshotState(StateLog);
 		}
+		if (StateLog) {
+			SnapshotState(StateLog);
+		}
+		switch (Step()) {
+		case TRAP_NONE:
+		case TRAP_NOEFFECT:
+			break;
+		case TRAP_METACALL:
+			fprintf(stdout, "\nTRAP: Metacall not implemented (illegal instruction)\n");
+			Stop(InstructionAddress);
+			break;
+		case TRAP_ILLEGAL:
+			fprintf(stdout, "\nTRAP: Illegal instruction executed\n");
+			Stop(InstructionAddress);
+			break;
+		case TRAP_MEMORY:
+			fprintf(stdout, "\nTRAP: Memory protection violation\n");
+			Stop(InstructionAddress);
+			break;
+		default:
+			fprintf(stdout, "\nTRAP: Unknown exception\n");
+			Stop(InstructionAddress);
+			break;
+		}
+		if (GetFrame() % 1000 == 0) RaiseIRQ();
 	}
 }
+

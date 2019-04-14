@@ -168,7 +168,8 @@ void ExecuteEval(const char* Parameters) {
 	Representation = ParseExpression(Parameters);
 	if (Representation == NULL) {
 		fprintf(stdout, "A parse error in expression.\n");
-	} else {
+	}
+	else {
 		char Expression[MAX_STRING];
 		StringifyExpression(Representation, Expression);
 		fprintf(stdout, "%s evaluates to ", Expression);
@@ -263,6 +264,13 @@ void ExecuteDisable(const char* Parameters) {
 	}
 }
 
+void ShowTrace(word Addr, char * Mnemonic)
+{
+	PrintRegisters(stdout);
+	fprintf(stdout, "  -  %04x: ", Addr);
+	Disassemble(&Addr, Mnemonic);
+	fprintf(stdout, "%s\n", Mnemonic);
+}
 
 logic Debugger() {
 	watchpoint* Watch;
@@ -353,7 +361,7 @@ logic Debugger() {
 			ExecuteDisable(OtherTokens);
 			break;
 		case CMD_RESET:		//power-on reset the Z80
-			Reset();
+			ResetCPU();
 			break;
 		default:
 			fprintf(stdout, "Unknown command.\n");
