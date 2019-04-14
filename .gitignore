@@ -1,1 +1,4 @@
 *CVS/
+Debug/
+Release/
+.vs/
