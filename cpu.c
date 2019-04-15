@@ -683,7 +683,10 @@ void PrintRegisters(FILE *Handle) {
 
 
 inline word FetchAddress(word* Address) {
-	return Memory[(*Address)++] | (Memory[(*Address)++] << 8);
+	word target;
+	target = Memory[(*Address)++];
+	target += Memory[(*Address)++] << 8;
+	return target;
 }
 
 // Disassemble the Z80 instruction starting at Address.
