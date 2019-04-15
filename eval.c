@@ -187,7 +187,7 @@ void SimplifyExpression(operation* Expr) {
 */
 
 word EvaluateExpression(operation* Expr) {
-	word Op[2];
+	word Op[2] = { 0 };
 	int i;
 	for (i = 0; i < OperandsTaken[Expr->Operator]; i++) {
 		switch (Expr->Operands[i].Type) {

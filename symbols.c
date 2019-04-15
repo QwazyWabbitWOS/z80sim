@@ -58,8 +58,8 @@ logic InString(const char* String, const char* Part) {
 }
 
 logic LoadSymbols(FILE* Handle) {
-	char Line[MAX_STRING];
-	char Name[MAX_NAME];
+	char Line[MAX_STRING] = { 0 };
+	char Name[MAX_NAME] = { 0 };
 	word Address;
 	if (!Handle) return FALSE;
 	while (fgets(Line, MAX_STRING, Handle)) {
@@ -77,10 +77,12 @@ logic LoadSymbols(FILE* Handle) {
 	return TRUE;
 }
 
+FILE* Handles[MAX_SOURCES];
+
 logic LoadSourcePointers(FILE* Handle) {
-	FILE* Handles[MAX_SOURCES];
-	char Line[MAX_STRING];
-	char Token[MAX_NAME];
+	char Line[MAX_STRING] = { 0 };
+	char Token[MAX_NAME] = { 0 };
+	char FileName[MAX_NAME] = { 0 };
 
 	while (fgets(Line, MAX_STRING, Handle)) {
 		sscanf(Line, "%s", Token);
@@ -88,7 +90,6 @@ logic LoadSourcePointers(FILE* Handle) {
 	}
 	while (fgets(Line, MAX_STRING, Handle)) {
 		int FileNumber;
-		char FileName[MAX_NAME];
 		sscanf(Line, "%s", Token);
 		if (!strcmp(Token, "EndSources")) break;
 		sscanf(Line, "%d %s", &FileNumber, &FileName);
@@ -105,6 +106,7 @@ logic LoadSourcePointers(FILE* Handle) {
 		SourceCode[Address].File = Handles[FileNumber];
 		SourceCode[Address].Line = SourceLine;
 	}
+	return TRUE;
 }
 
 source SearchSource(word Address) {
