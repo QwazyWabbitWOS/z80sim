@@ -328,7 +328,6 @@ operation* Reduce() {
 }
 
 operation* ParseExpression(char const* Expression) {
-	char Token[MAX_TOKEN] = "";
 	terminal Terminal;
 	logic SyntaxError = FALSE;
 	operation* Representation = NULL;

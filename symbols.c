@@ -77,7 +77,7 @@ logic LoadSymbols(FILE* Handle) {
 	return TRUE;
 }
 
-FILE* Handles[MAX_SOURCES];
+static FILE* Handles[MAX_SOURCES];
 
 logic LoadSourcePointers(FILE* Handle) {
 	char Line[MAX_STRING] = { 0 };

@@ -223,10 +223,10 @@ void SubByte(byte* Register, byte Operand) {
 void AddWord(word* Register, word Operand) {
 	long Sum;
 	Sum = *Register + Operand;
-	if (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00) 
+	if (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00)
 		FlagH = 1; else FlagH = 0;
 	*Register = (word)Sum;
-	if (Sum > 0xFFFF) 
+	if (Sum > 0xFFFF)
 		FlagNC = !(FlagC = 1);
 	else
 		FlagC = !(FlagNC = 1);
@@ -682,7 +682,7 @@ void PrintRegisters(FILE *Handle) {
 }
 
 
-inline word FetchAddress(word* Address) {
+word FetchAddress(word* Address) {
 	word target;
 	target = Memory[(*Address)++];
 	target += Memory[(*Address)++] << 8;
@@ -728,14 +728,19 @@ void Disassemble(word* Address, char* Mnemonic) {
 	}
 	else if (OP_LD_R_B(Opcode)) {
 		NameRegister(OperandR(Opcode), NameR);
-		if (Indexing)
-			sprintf(Mnemonic, "ld #%02x %s, #%02x", Memory[(*Address)++], NameR, Memory[(*Address)++]);
+		if (Indexing) {
+			byte low  = Memory[(*Address)++];
+			byte high = Memory[(*Address)++];
+			sprintf(Mnemonic, "ld #%02x %s, #%02x", high, NameR, low); // This is LD (IX+d),n in most assemblers (MAC, Zilog)
+		}
 		else
 			sprintf(Mnemonic, "ld %s, #%02x", NameR, Memory[(*Address)++]);
 	}
 	else if (OP_LD_P_W(Opcode)) {
 		NameRegisterPair(OperandP(Opcode), NameP);
-		sprintf(Mnemonic, "ld %s, #%02x%02x", NameP, Memory[(*Address)++], Memory[(*Address)++]);
+		byte low  = Memory[(*Address)++];
+		byte high = Memory[(*Address)++];
+		sprintf(Mnemonic, "ld %s, #%02x%02x", NameP, high, low);
 	}
 	else if (OP_LD_SP_HL(Opcode)) {
 		NameRegisterPair(&PointerReg->Word, NameI);
@@ -748,13 +753,19 @@ void Disassemble(word* Address, char* Mnemonic) {
 		sprintf(Mnemonic, "ld a, (de)");
 	}
 	else if (OP_LD_A_PW(Opcode)) {
-		sprintf(Mnemonic, "ld a, (%02x%02x)", Memory[(*Address)++], Memory[(*Address)++]);
+		byte low  = Memory[(*Address)++];
+		byte high = Memory[(*Address)++];
+		sprintf(Mnemonic, "ld a, (%02x%02x)", high, low);
 	}
 	else if (OP_LD_PW_A(Opcode)) {
-		sprintf(Mnemonic, "ld (%02x%02x), a", Memory[(*Address)++], Memory[(*Address)++]);
+		byte low  = Memory[(*Address)++];
+		byte high = Memory[(*Address)++];
+		sprintf(Mnemonic, "ld (%02x%02x), a", high, low);
 	}
 	else if (OP_LD_HL_PW(Opcode)) {
-		sprintf(Mnemonic, "ld hl, (%02x%02x)", Memory[(*Address)++], Memory[(*Address)++]);
+		byte low  = Memory[(*Address)++];
+		byte high = Memory[(*Address)++];
+		sprintf(Mnemonic, "ld hl, (%02x%02x)", high, low);
 	}
 	else if (OP_LD_PBC_A(Opcode)) {
 		sprintf(Mnemonic, "ld (bc), a");
@@ -1036,6 +1047,7 @@ trap Step() {
 	OldAF = AF;
 	OldSP = SP;
 	OldPC = PC;
+	PC = OldPC; // Silence warning about unused OldPC
 	OldBC = BC;
 	OldDE = DE;
 	OldHL = HL;
@@ -1082,7 +1094,8 @@ trap Step() {
 		TStates += 7;
 	}
 	else if (OP_LD_P_W(IReg)) {
-		*OperandP(IReg) = ReadMemory(PC.Word++) | (ReadMemory(PC.Word++) << 8);
+		*OperandP(IReg)  = ReadMemory(PC.Word++);
+		*OperandP(IReg) += (ReadMemory(PC.Word++) << 8);
 		TStates += 10;
 	}
 	else if (OP_LD_SP_HL(IReg)) {
@@ -1098,16 +1111,24 @@ trap Step() {
 		TStates += 7;
 	}
 	else if (OP_LD_A_PW(IReg)) {
-		AF.Bytes.H = ReadMemory(ReadMemory(PC.Word++) | (ReadMemory(PC.Word++) << 8));
+		word addr;
+		addr = ReadMemory(PC.Word++);
+		addr += ReadMemory(PC.Word++) << 8;
+		AF.Bytes.H = ReadMemory(addr);
 		TStates += 13;
 	}
 	else if (OP_LD_PW_A(IReg)) {
-		WriteMemory(ReadMemory(PC.Word++) | (ReadMemory(PC.Word++) << 8), AF.Bytes.H);
+		word addr;
+		addr = ReadMemory(PC.Word++);
+		addr += ReadMemory(PC.Word++) << 8;
+		WriteMemory(addr, AF.Bytes.H);
 		TStates += 13;
 	}
 	else if (OP_LD_HL_PW(IReg)) {
-		word Address = ReadMemory(PC.Word++) | (ReadMemory(PC.Word++) << 8);
-		PointerReg->Word = ReadMemory(Address) | (ReadMemory(Address + 1) << 8);
+		word Address = ReadMemory(PC.Word++);
+		Address += ReadMemory(PC.Word++) << 8;
+		PointerReg->Word = ReadMemory(Address);
+		PointerReg->Word += ReadMemory(Address + 1) << 8;
 		TStates += 16;
 	}
 	else if (OP_LD_PBC_A(IReg)) {
@@ -1458,13 +1479,16 @@ trap Step() {
 		IReg = ReadMemory(PC.Word++);
 		if (OP_ED_LD_P_PW(IReg)) {
 			int Addr;
-			Addr = ReadMemory(PC.Word++) | (ReadMemory(PC.Word++) << 8);
-			*OperandP(IReg) = ReadMemory(Addr++) | (ReadMemory(Addr) << 8);
+			Addr = ReadMemory(PC.Word++);
+			Addr += ReadMemory(PC.Word++) << 8;
+			*OperandP(IReg) = ReadMemory(Addr++);
+			*OperandP(IReg) += (ReadMemory(Addr) << 8);
 			TStates += 20;
 		}
 		else if (OP_ED_LD_PW_SP(IReg)) {
 			int Addr;
-			Addr = ReadMemory(PC.Word++) | (ReadMemory(PC.Word++) << 8);
+			Addr = ReadMemory(PC.Word++);
+			Addr += ReadMemory(PC.Word++) << 8;
 			WriteMemory(Addr, SP.Bytes.L); Addr++;
 			WriteMemory(Addr, SP.Bytes.L);
 			TStates += 20;
