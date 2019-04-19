@@ -49,9 +49,9 @@ void CreateToken(tokens* Branch, const char* Lexeme, int Id) {
 	size_t i;
 	assert(Branch && Lexeme);
 	for (i = 0; i < strlen(Lexeme); i++) {
-		if (Branch->Characters[Lexeme[i]] == NULL)
-			Branch->Characters[Lexeme[i]] = NewTree();
-		Branch = Branch->Characters[Lexeme[i]];
+		if (Branch->Characters[(byte)Lexeme[i]] == NULL)
+			Branch->Characters[(byte)Lexeme[i]] = NewTree();
+		Branch = Branch->Characters[(byte)Lexeme[i]];
 	}
 	Branch->TokenId = Id;
 }
@@ -61,9 +61,9 @@ int ExtractToken(const tokens* Branch, const char** Expression, char* Lexeme, lo
 	size_t i;
 	assert(Branch && Expression && *Expression);
 	for (i = 0; i < strlen(String); i++) {
-		if (Branch->Characters[String[i]] == NULL)
+		if (Branch->Characters[(byte)String[i]] == NULL)
 			break;
-		Branch = Branch->Characters[String[i]];
+		Branch = Branch->Characters[(byte)String[i]];
 		if (Lexeme != NULL)
 			Lexeme[i] = String[i];
 	}
@@ -83,7 +83,7 @@ int ExtractToken(const tokens* Branch, const char** Expression, char* Lexeme, lo
 					break;
 			}
 			if (BranchesFound == 1) {
-				Branch = Branch->Characters[TakenBranch];
+				Branch = Branch->Characters[(byte)TakenBranch];
 				if (Lexeme != NULL)
 					Lexeme[i++] = TakenBranch;
 			}
