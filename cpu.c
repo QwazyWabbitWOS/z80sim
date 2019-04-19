@@ -1003,6 +1003,30 @@ void Disassemble(word* Address, char* Mnemonic) {
 			LookupSymbol(FetchAddress(Address), Symbol);
 			sprintf(Mnemonic, "ld (%s), sp", Symbol);
 		}
+		else if (OP_ED_ADC_HL_BC(Opcode)) {
+			sprintf(Mnemonic, "adc hl, bc");
+		}
+		else if (OP_ED_ADC_HL_DE(Opcode)) {
+			sprintf(Mnemonic, "adc hl, de");
+		}
+		else if (OP_ED_ADC_HL_HL(Opcode)) {
+			sprintf(Mnemonic, "adc hl, hl");
+		}
+		else if (OP_ED_ADC_HL_SP(Opcode)) {
+			sprintf(Mnemonic, "adc hl, sp");
+		}
+		else if (OP_ED_RETI(Opcode)) {
+			sprintf(Mnemonic, "reti");
+		}
+		else if (OP_ED_RETN(Opcode)) {
+			sprintf(Mnemonic, "retn");
+		}
+		else if (OP_ED_RRD(Opcode)) { // rotate digit right through (HL)
+			sprintf(Mnemonic, "rrd");
+		}
+		else if (OP_ED_RLD(Opcode)) { // rotate digit left through (HL)
+			sprintf(Mnemonic, "rld");
+		}
 		else if (OP_ED_IM0(Opcode)) {
 			sprintf(Mnemonic, "im 0");
 		}
@@ -1017,11 +1041,12 @@ void Disassemble(word* Address, char* Mnemonic) {
 			sprintf(Mnemonic, "in %s, (c)", NameR);
 		}
 		else {
-			sprintf(Mnemonic, "???");
+			// Unrecognized EDxx opcode.
+			sprintf(Mnemonic, "??? OP_ED #%02x ???", Memory[*Address - 1]);
 		}
 	}
 	else {
-		sprintf(Mnemonic, "???");
+		sprintf(Mnemonic, "??? OP: #%02x", Opcode);
 	}
 }
 
@@ -1493,14 +1518,42 @@ trap Step() {
 			WriteMemory(Addr, SP.Bytes.L);
 			TStates += 20;
 		}
+		else if (OP_ED_RRD(IReg)) {
+			int     x, a;
+			x = ReadMemory(HL.Word);
+			a = (AF.Bytes.H & 0xf0) << 8;
+			a |= ((x & 0x0f) << 8) | ((AF.Bytes.H & 0x0f) << 4) | (x >> 4);
+			WriteMemory(HL.Word, a);
+			a >>= 8;
+			AF.Bytes.H = a;
+			SetFlags(AF.Bytes.H);
+			TStates += 18;
+		}
+		else if (OP_ED_RLD(IReg)) {
+			int     x, a;
+			x = ReadMemory(HL.Word);
+			a = (AF.Bytes.H & 0xf0) << 8;
+			a |= (x << 4) | (AF.Bytes.H & 0x0f);
+			WriteMemory(HL.Word, a);
+			a >>= 8;
+			AF.Bytes.H = a;
+			SetFlags(AF.Bytes.H);
+			TStates += 18;
+		}
+		else if (OP_ED_RETI(IReg)) {
+			puts("RETI instruction not implemented"); //TODO: Implement RETI
+		}
+		else if (OP_ED_RETN(IReg)) {
+			puts("RETN instruction not implemented"); //TODO: Implement RETN
+		}
 		else if (OP_ED_IM0(IReg)) {
-			//#warning TODO: Switch to interrupt mode 0
+			puts("IM 0 instruction not implemented"); //TODO: Switch to interrupt mode 0
 		}
 		else if (OP_ED_IM1(IReg)) {
-			//#warning TODO: Switch to interrupt mode 1
+			puts("IM 1 instruction not implemented"); //TODO: Switch to interrupt mode 1
 		}
 		else if (OP_ED_IM2(IReg)) {
-			//#warning TODO: Switch to interrupt mode 2
+			puts("IM 2 instruction not implemented"); //TODO: Switch to interrupt mode 2
 		}
 		else if (OP_ED_IN_R_C(IReg)) {
 			BC.Bytes.L = ReadIO(*OperandR(IReg));

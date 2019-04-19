@@ -120,6 +120,17 @@
 #define OP_ED_LD_P_PW(Byte) ((0xCF & (Byte)) == 0x4B)
 #define OP_ED_LD_PW_SP(Byte) ((0xFF & (Byte)) == 0x73)
 
+#define OP_ED_ADC_HL_BC(Byte)     ((0xFF & (Byte)) == 0x4A)
+#define OP_ED_ADC_HL_DE(Byte)     ((0xFF & (Byte)) == 0x5A)
+#define OP_ED_ADC_HL_HL(Byte)     ((0xFF & (Byte)) == 0x6A)
+#define OP_ED_ADC_HL_SP(Byte)     ((0xFF & (Byte)) == 0x7A)
+
+#define OP_ED_RETN(Byte)     ((0xFF & (Byte)) == 0x45)
+#define OP_ED_RETI(Byte)     ((0xFF & (Byte)) == 0x4D)
+
+#define OP_ED_RRD(Byte)      ((0xFF & (Byte)) == 0x67)
+#define OP_ED_RLD(Byte)      ((0xFF & (Byte)) == 0x6F)
+
 #define OP_ED_IM0(Byte)     ((0xFF & (Byte)) == 0x46)
 #define OP_ED_IM1(Byte)     ((0xFF & (Byte)) == 0x56)
 #define OP_ED_IM2(Byte)     ((0xFF & (Byte)) == 0x5E)
