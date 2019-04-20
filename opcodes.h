@@ -66,6 +66,8 @@
 #define OP_DJNZ_B(Byte)     ((0xFF & (Byte)) == 0x10)
 
 #define OP_CPL(Byte)        ((0xFF & (Byte)) == 0x2F)
+#define OP_CCF(Byte)        ((0xFF & (Byte)) == 0x3F)
+#define OP_SCF(Byte)        ((0xFF & (Byte)) == 0x37)
 
 #define OP_DI(Byte)         ((0xFF & (Byte)) == 0xF3)
 #define OP_EI(Byte)         ((0xFF & (Byte)) == 0xFB)
@@ -106,7 +108,6 @@
 
 #define OP_CB(Byte)         ((0xFF & (Byte)) == 0xCB)
 #define OP_ED(Byte)         ((0xFF & (Byte)) == 0xED)
-
 
 #define OP_CB_RLC(Byte)     ((0xF8 & (Byte)) == 0x00)
 #define OP_CB_RL(Byte)      ((0xF8 & (Byte)) == 0x10)

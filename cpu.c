@@ -861,17 +861,23 @@ void Disassemble(word* Address, char* Mnemonic) {
 		sprintf(Mnemonic, "jp (HL)");
 	}
 	else if (OP_JR_B(Opcode)) {
-		sprintf(Mnemonic, "jr %02x", Memory[(*Address)++]);
+		sprintf(Mnemonic, "jr #%02x", Memory[(*Address)++]);
 	}
 	else if (OP_JR_SF_B(Opcode)) {
 		NameFlag(OperandF(Opcode), NameF);
-		sprintf(Mnemonic, "jr %s, %02x", NameF, Memory[(*Address)++]);
+		sprintf(Mnemonic, "jr %s, #%02x", NameF, Memory[(*Address)++]);
 	}
 	else if (OP_DJNZ_B(Opcode)) {
-		sprintf(Mnemonic, "djnz %02x", Memory[(*Address)++]);
+		sprintf(Mnemonic, "djnz #%02x", Memory[(*Address)++]);
 	}
 	else if (OP_CPL(Opcode)) {
 		sprintf(Mnemonic, "cpl");
+	}
+	else if (OP_CCF(Opcode)) {
+		sprintf(Mnemonic, "ccf");
+	}
+	else if (OP_SCF(Opcode)) {
+		sprintf(Mnemonic, "scf");
 	}
 	else if (OP_DI(Opcode)) {
 		sprintf(Mnemonic, "di");
@@ -1299,6 +1305,22 @@ trap Step() {
 	else if (OP_CPL(IReg)) {
 		AF.Bytes.H = ~AF.Bytes.H;
 		FlagN = FlagH = 1;
+		TStates += 4;
+	}
+	else if (OP_CCF(IReg)) {
+		FlagC = !FlagC;
+		FlagNC = !FlagNC;
+		// Undocumented flag behavior
+		Flag3 = AF.Bytes.H & 0x08;
+		Flag5 = AF.Bytes.H & 0x20;
+		TStates += 4;
+	}
+	else if (OP_SCF(IReg)) {
+		FlagC = 1;
+		FlagNC = !FlagC;
+		// Undocumented flag behavior
+		Flag3 = AF.Bytes.H & 0x08;
+		Flag5 = AF.Bytes.H & 0x20;
 		TStates += 4;
 	}
 	else if (OP_DI(IReg)) {
