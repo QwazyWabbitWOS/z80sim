@@ -23,7 +23,10 @@
 #define OP_IXPREFIX(Byte)   ((0xFF & (Byte)) == 0xDD)
 #define OP_IYPREFIX(Byte)   ((0xFF & (Byte)) == 0xFD)
 
+#define OP_NOP(Byte)        ((0xFF & (Byte)) == 0x00)
 #define OP_HLT(Byte)        ((0xFF & (Byte)) == 0x76)
+
+#define OP_DAA(Byte)        ((0xFF & (Byte)) == 0x27)
 
 #define OP_LD_R_S(Byte)     ((0xC0 & (Byte)) == 0x40)
 #define OP_LD_R_B(Byte)     ((0xC7 & (Byte)) == 0x06)
@@ -72,8 +75,6 @@
 #define OP_DI(Byte)         ((0xFF & (Byte)) == 0xF3)
 #define OP_EI(Byte)         ((0xFF & (Byte)) == 0xFB)
 
-#define OP_NOP(Byte)        ((0xFF & (Byte)) == 0x00)
-
 #define OP_CALL_W(Byte)     ((0xFF & (Byte)) == 0xCD)
 #define OP_CALL_F_W(Byte)   ((0xC7 & (Byte)) == 0xC4)
 
@@ -105,18 +106,21 @@
 #define OP_RLA(Byte)        ((0xFF & (Byte)) == 0x17)
 #define OP_RRA(Byte)        ((0xFF & (Byte)) == 0x1F)
 
-
+// Two byte opcodes: CBxx
 #define OP_CB(Byte)         ((0xFF & (Byte)) == 0xCB)
-#define OP_ED(Byte)         ((0xFF & (Byte)) == 0xED)
-
 #define OP_CB_RLC(Byte)     ((0xF8 & (Byte)) == 0x00)
-#define OP_CB_RL(Byte)      ((0xF8 & (Byte)) == 0x10)
 #define OP_CB_RRC(Byte)     ((0xF8 & (Byte)) == 0x08)
-
+#define OP_CB_RL(Byte)      ((0xF8 & (Byte)) == 0x10)
+#define OP_CB_RR(Byte)      ((0xF8 & (Byte)) == 0x18)
 #define OP_CB_SLA(Byte)     ((0xF8 & (Byte)) == 0x20)
+#define OP_CB_SRA(Byte)     ((0xF8 & (Byte)) == 0x28)
+#define OP_CB_SLL(Byte)     ((0xF8 & (Byte)) == 0x30)
+#define OP_CB_SRL(Byte)     ((0xF8 & (Byte)) == 0x38)
+#define OP_CB_BIT_N_S(Byte) ((0xC0 & (Byte)) == 0x40)	// Bit test
+#define OP_CB_BIT_RES(Byte) ((0xC0 & (Byte)) == 0x80)	// Bit reset
+#define OP_CB_BIT_SET(Byte) ((0xC0 & (Byte)) == 0xC0)	// Bit set
 
-#define OP_CB_BIT_N_S(Byte) ((0xC0 & (Byte)) == 0x40)
-
+#define OP_ED(Byte)         ((0xFF & (Byte)) == 0xED)
 
 #define OP_ED_LD_P_PW(Byte) ((0xCF & (Byte)) == 0x4B)
 #define OP_ED_LD_PW_SP(Byte) ((0xFF & (Byte)) == 0x73)
@@ -126,8 +130,18 @@
 #define OP_ED_ADC_HL_HL(Byte)     ((0xFF & (Byte)) == 0x6A)
 #define OP_ED_ADC_HL_SP(Byte)     ((0xFF & (Byte)) == 0x7A)
 
+#define OP_ED_R_A(Byte)     ((0xFF & (Byte)) == 0x4F)
+#define OP_ED_A_R(Byte)     ((0xFF & (Byte)) == 0x5F)
+#define OP_ED_I_A(Byte)     ((0xFF & (Byte)) == 0x47)
+#define OP_ED_A_I(Byte)     ((0xFF & (Byte)) == 0x57)
+
 #define OP_ED_RETN(Byte)     ((0xFF & (Byte)) == 0x45)
 #define OP_ED_RETI(Byte)     ((0xFF & (Byte)) == 0x4D)
+
+#define OP_ED_CPD(Byte)     ((0xFF & (Byte)) == 0xA9)
+#define OP_ED_CPDR(Byte)    ((0xFF & (Byte)) == 0xB9)
+#define OP_ED_CPI(Byte)     ((0xFF & (Byte)) == 0xA1)
+#define OP_ED_CPIR(Byte)    ((0xFF & (Byte)) == 0xB1)
 
 #define OP_ED_RRD(Byte)      ((0xFF & (Byte)) == 0x67)
 #define OP_ED_RLD(Byte)      ((0xFF & (Byte)) == 0x6F)
@@ -178,6 +192,6 @@
 #define OPARG_SF_NC(Byte)   ((0x18 & (Byte)) == 0x10)
 #define OPARG_SF_C(Byte)    ((0x18 & (Byte)) == 0x18)
 
-#define OPPARM_N(Byte)      (0x38 & Byte)
+#define OPPARM_N(Byte)      (0x38 & Byte) // mask for bit val
 
 #endif

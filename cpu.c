@@ -495,9 +495,9 @@ void NameRegister(byte* Register, char* Name) {
 		if (PointerReg == &HL)
 			strcpy(Name, "(hl)");
 		else if (PointerReg == &IX)
-			strcpy(Name, "(ix)");
+			strcpy(Name, "(ix + ");	// completed by calling function
 		else if (PointerReg == &IY)
-			strcpy(Name, "(iy)");
+			strcpy(Name, "(iy + ");
 		else
 			strcpy(Name, "?i");
 	}
@@ -697,8 +697,7 @@ void Disassemble(word* Address, char* Mnemonic) {
 		NameF[MAX_NAME], Symbol[MAX_NAME];
 	byte Opcode;
 	Opcode = Memory[(*Address)++];
-	if (OP_IXPREFIX(Opcode))
-	{
+	if (OP_IXPREFIX(Opcode)) {
 		Opcode = ReadMemory((*Address)++);
 		PointerReg = &IX;
 		Indexing = TRUE;
@@ -715,30 +714,33 @@ void Disassemble(word* Address, char* Mnemonic) {
 	if (OP_HLT(Opcode)) {
 		sprintf(Mnemonic, "halt");
 	}
+	else if (OP_DAA(Opcode)) {
+		sprintf(Mnemonic, "daa");
+	}
 	else if (OP_LD_R_S(Opcode)) {
 		NameRegister(OperandR(Opcode), NameR);
 		NameRegister(OperandS(Opcode), NameS);
 		if (Indexing) {
-			if (OPARG_R_PHL(Opcode))
-				sprintf(Mnemonic, "ld #%02x %s, %s", Memory[(*Address)++], NameR, NameS);
-			else if (OPARG_S_PHL(Opcode))
-				sprintf(Mnemonic, "ld %s, #%02x %s", NameR, Memory[(*Address)++], NameS);
+			if (OPARG_R_PHL(Opcode))	// ld (i? + d),r
+				sprintf(Mnemonic, "ld %s#%02x), %s", NameR, Memory[(*Address)++], NameS);
+			else if (OPARG_S_PHL(Opcode))	// ld r,(i? + d)
+				sprintf(Mnemonic, "ld %s, %s#%02x)", NameR, NameS, Memory[(*Address)++]);
 		}
 		else sprintf(Mnemonic, "ld %s, %s", NameR, NameS);
 	}
 	else if (OP_LD_R_B(Opcode)) {
 		NameRegister(OperandR(Opcode), NameR);
 		if (Indexing) {
-			byte low  = Memory[(*Address)++];
+			byte low = Memory[(*Address)++];
 			byte high = Memory[(*Address)++];
-			sprintf(Mnemonic, "ld #%02x %s, #%02x", high, NameR, low); // This is LD (IX+d),n in most assemblers (MAC, Zilog)
+			sprintf(Mnemonic, "ld %s#%02x), #%02x", NameR, low, high);
 		}
 		else
 			sprintf(Mnemonic, "ld %s, #%02x", NameR, Memory[(*Address)++]);
 	}
 	else if (OP_LD_P_W(Opcode)) {
 		NameRegisterPair(OperandP(Opcode), NameP);
-		byte low  = Memory[(*Address)++];
+		byte low = Memory[(*Address)++];
 		byte high = Memory[(*Address)++];
 		sprintf(Mnemonic, "ld %s, #%02x%02x", NameP, high, low);
 	}
@@ -753,19 +755,23 @@ void Disassemble(word* Address, char* Mnemonic) {
 		sprintf(Mnemonic, "ld a, (de)");
 	}
 	else if (OP_LD_A_PW(Opcode)) {
-		byte low  = Memory[(*Address)++];
+		byte low = Memory[(*Address)++];
 		byte high = Memory[(*Address)++];
 		sprintf(Mnemonic, "ld a, (%02x%02x)", high, low);
 	}
 	else if (OP_LD_PW_A(Opcode)) {
-		byte low  = Memory[(*Address)++];
+		byte low = Memory[(*Address)++];
 		byte high = Memory[(*Address)++];
-		sprintf(Mnemonic, "ld (%02x%02x), a", high, low);
+		sprintf(Mnemonic, "ld (#%02x%02x), a", high, low);
 	}
 	else if (OP_LD_HL_PW(Opcode)) {
-		byte low  = Memory[(*Address)++];
+		byte low = Memory[(*Address)++];
 		byte high = Memory[(*Address)++];
-		sprintf(Mnemonic, "ld hl, (%02x%02x)", high, low);
+		NameRegisterPair(OperandP(Opcode), NameP);
+		if (Indexing)
+			sprintf(Mnemonic, "ld %s, (#%02x%02x)", NameP, high, low);
+		else
+			sprintf(Mnemonic, "ld hl, (#%02x%02x)", high, low);
 	}
 	else if (OP_LD_PBC_A(Opcode)) {
 		sprintf(Mnemonic, "ld (bc), a");
@@ -775,10 +781,17 @@ void Disassemble(word* Address, char* Mnemonic) {
 	}
 	else if (OP_ADD_S(Opcode)) {
 		NameRegister(OperandS(Opcode), NameS);
-		if (OPMOD_CARRYIN(Opcode))
-			sprintf(Mnemonic, "adc a, %s", NameS);
+		if (OPMOD_CARRYIN(Opcode)) {
+			if (Indexing)
+				sprintf(Mnemonic, "adc a, %s#%02x)", NameS, Memory[(*Address)++]);
+			else
+				sprintf(Mnemonic, "adc a, %s", NameS);
+		}
 		else
-			sprintf(Mnemonic, "add a, %s", NameS);
+			if (Indexing)
+				sprintf(Mnemonic, "add a, %s#%02x)", NameS, Memory[(*Address)++]);
+			else
+				sprintf(Mnemonic, "add a, %s", NameS);
 	}
 	else if (OP_ADD_B(Opcode)) {
 		if (OPMOD_CARRYIN(Opcode))
@@ -806,11 +819,19 @@ void Disassemble(word* Address, char* Mnemonic) {
 	}
 	else if (OP_INC_R(Opcode)) {
 		NameRegister(OperandR(Opcode), NameR);
-		sprintf(Mnemonic, "inc %s", NameR);
+		if (Indexing) {
+			sprintf(Mnemonic, "inc %s#%02x)", NameR, Memory[(*Address)++]);
+		}
+		else
+			sprintf(Mnemonic, "inc %s", NameR);
 	}
 	else if (OP_DEC_R(Opcode)) {
 		NameRegister(OperandR(Opcode), NameR);
-		sprintf(Mnemonic, "dec %s", NameR);
+		if (Indexing) {
+			sprintf(Mnemonic, "dec %s#%02x)", NameR, Memory[(*Address)++]);
+		}
+		else
+			sprintf(Mnemonic, "dec %s", NameR);
 	}
 	else if (OP_INC_P(Opcode)) {
 		NameRegisterPair(OperandP(Opcode), NameP);
@@ -818,11 +839,14 @@ void Disassemble(word* Address, char* Mnemonic) {
 	}
 	else if (OP_DEC_P(Opcode)) {
 		NameRegisterPair(OperandP(Opcode), NameP);
-		sprintf(Mnemonic, "dec %s", NameP);
+			sprintf(Mnemonic, "dec %s", NameP);
 	}
 	else if (OP_AND_S(Opcode)) {
 		NameRegister(OperandS(Opcode), NameS);
-		sprintf(Mnemonic, "and a, %s", NameS);
+		if (Indexing)
+			sprintf(Mnemonic, "and a, %s#%02x)", NameS, Memory[(*Address)++]);
+		else
+			sprintf(Mnemonic, "and a, %s", NameS);
 	}
 	else if (OP_AND_B(Opcode)) {
 		sprintf(Mnemonic, "and a, #%02x", Memory[(*Address)++]);
@@ -843,7 +867,10 @@ void Disassemble(word* Address, char* Mnemonic) {
 	}
 	else if (OP_CP_S(Opcode)) {
 		NameRegister(OperandS(Opcode), NameS);
-		sprintf(Mnemonic, "cp a, %s", NameS);
+		if (Indexing)
+			sprintf(Mnemonic, "cp a, %s#%02x)", NameS, Memory[(*Address)++]);
+		else
+			sprintf(Mnemonic, "cp a, %s", NameS);
 	}
 	else if (OP_CP_B(Opcode)) {
 		sprintf(Mnemonic, "cp a, #%02x", Memory[(*Address)++]);
@@ -973,29 +1000,59 @@ void Disassemble(word* Address, char* Mnemonic) {
 		sprintf(Mnemonic, "nop");
 	}
 	else if (OP_CB(Opcode)) {
-		Opcode = Memory[(*Address)++];
-		if (OP_CB_RLC(Opcode)) {
-			NameRegister(OperandS(Opcode), NameS);
-			sprintf(Mnemonic, "rlc %s", NameS);
-		}
-		else if (OP_CB_RL(Opcode)) {
-			NameRegister(OperandS(Opcode), NameS);
-			sprintf(Mnemonic, "rl %s", NameS);
-		}
-		else if (OP_CB_RRC(Opcode)) {
-			NameRegister(OperandS(Opcode), NameS);
-			sprintf(Mnemonic, "rrc %s", NameS);
-		}
-		else if (OP_CB_SLA(Opcode)) {
-			NameRegister(OperandS(Opcode), NameS);
-			sprintf(Mnemonic, "sla %s", NameS);
-		}
-		else if (OP_CB_BIT_N_S(Opcode)) {
-			NameRegister(OperandS(Opcode), NameS);
-			sprintf(Mnemonic, "bit %d, %s", OPPARM_N(Opcode), NameS);
+		if (!Indexing) {		//CBxx opcodes
+			Opcode = Memory[(*Address)++];
+			if (OP_CB_RLC(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "rlc %s", NameS);
+			}
+			else if (OP_CB_RRC(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "rrc %s", NameS);
+			}
+			else if (OP_CB_RL(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "rl %s", NameS);
+			}
+			else if (OP_CB_RR(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "rr %s", NameS);
+			}
+			else if (OP_CB_SLA(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "sla %s", NameS);
+			}
+			else if (OP_CB_SRA(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "sra %s", NameS);
+			}
+			else if (OP_CB_SLL(Opcode)) {	// undocumented Shift Left Logical
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "sll %s", NameS);
+			}
+			else if (OP_CB_SRL(Opcode)) {	// documented Shift Right Logical
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "srl %s", NameS);
+			}
+			else if (OP_CB_BIT_N_S(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "bit %d, %s", OPPARM_N(Opcode) >> 3, NameS);
+			}
+			else if (OP_CB_BIT_RES(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "res %d, %s", OPPARM_N(Opcode) >> 3, NameS);
+			}
+			else if (OP_CB_BIT_SET(Opcode)) {
+				NameRegister(OperandS(Opcode), NameS);
+				sprintf(Mnemonic, "set %d, %s", OPPARM_N(Opcode) >> 3, NameS);
+			}
+			else {
+				sprintf(Mnemonic, "??? OP_CB #%02x", Opcode);	// undecoded CBxx
+			}
 		}
 		else {
-			sprintf(Mnemonic, "???");
+			Opcode = Memory[(*Address)++]; // undecoded DDCBddxx
+			sprintf(Mnemonic, "??? DDCB #%02x #%02x", Opcode, Memory[(*Address)++]);
 		}
 	}
 	else if (OP_ED(Opcode)) {
@@ -1020,6 +1077,30 @@ void Disassemble(word* Address, char* Mnemonic) {
 		}
 		else if (OP_ED_ADC_HL_SP(Opcode)) {
 			sprintf(Mnemonic, "adc hl, sp");
+		}
+		else if (OP_ED_R_A(Opcode)) {
+			sprintf(Mnemonic, "ld r, a");
+		}
+		else if (OP_ED_I_A(Opcode)) {
+			sprintf(Mnemonic, "ld i, a");
+		}
+		else if (OP_ED_A_I(Opcode)) {
+			sprintf(Mnemonic, "ld a, i");
+		}
+		else if (OP_ED_A_R(Opcode)) {
+			sprintf(Mnemonic, "ld a, r");
+		}
+		else if (OP_ED_CPD(Opcode)) {
+			sprintf(Mnemonic, "cpd");
+		}
+		else if (OP_ED_CPDR(Opcode)) {
+			sprintf(Mnemonic, "cpdr");
+		}
+		else if (OP_ED_CPI(Opcode)) {
+			sprintf(Mnemonic, "cpi");
+		}
+		else if (OP_ED_CPIR(Opcode)) {
+			sprintf(Mnemonic, "cpir");
 		}
 		else if (OP_ED_RETI(Opcode)) {
 			sprintf(Mnemonic, "reti");
@@ -1048,7 +1129,7 @@ void Disassemble(word* Address, char* Mnemonic) {
 		}
 		else {
 			// Unrecognized EDxx opcode.
-			sprintf(Mnemonic, "??? OP_ED #%02x ???", Memory[*Address - 1]);
+			sprintf(Mnemonic, "??? OP_ED #%02x", Opcode);
 		}
 	}
 	else {
@@ -1125,7 +1206,7 @@ trap Step() {
 		TStates += 7;
 	}
 	else if (OP_LD_P_W(IReg)) {
-		*OperandP(IReg)  = ReadMemory(PC.Word++);
+		*OperandP(IReg) = ReadMemory(PC.Word++);
 		*OperandP(IReg) += (ReadMemory(PC.Word++) << 8);
 		TStates += 10;
 	}
