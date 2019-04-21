@@ -91,7 +91,9 @@ void Stop(word Address) {
 		ReadFileLine(SourceSpec.File, SourceSpec.Line + 1, SourceLine);
 		fprintf(stdout, "           %s\n", SourceLine);
 	}
-	else fprintf(stdout, "(no C source line showable)\n");
+	else 
+		fprintf(stdout, "(no C source line showable)\n");
+	fflush(NULL);	// for trace file
 }
 
 int main(int argc, char* argv[]) {
