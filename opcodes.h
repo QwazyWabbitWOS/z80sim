@@ -138,20 +138,43 @@
 #define OP_ED_I_A(Byte)     ((0xFF & (Byte)) == 0x47)
 #define OP_ED_A_I(Byte)     ((0xFF & (Byte)) == 0x57)
 
-#define OP_ED_RETN(Byte)     ((0xFF & (Byte)) == 0x45)
-#define OP_ED_RETI(Byte)     ((0xFF & (Byte)) == 0x4D)
+#define OP_ED_RETN(Byte)    ((0xFF & (Byte)) == 0x45)
+#define OP_ED_RETI(Byte)    ((0xFF & (Byte)) == 0x4D)
 
 #define OP_ED_CPD(Byte)     ((0xFF & (Byte)) == 0xA9)
 #define OP_ED_CPDR(Byte)    ((0xFF & (Byte)) == 0xB9)
 #define OP_ED_CPI(Byte)     ((0xFF & (Byte)) == 0xA1)
 #define OP_ED_CPIR(Byte)    ((0xFF & (Byte)) == 0xB1)
 
-#define OP_ED_RRD(Byte)      ((0xFF & (Byte)) == 0x67)
-#define OP_ED_RLD(Byte)      ((0xFF & (Byte)) == 0x6F)
+#define OP_ED_RRD(Byte)     ((0xFF & (Byte)) == 0x67)
+#define OP_ED_RLD(Byte)     ((0xFF & (Byte)) == 0x6F)
+
+#define OP_ED_NEG(Byte)     ((0xFF & (Byte)) == 0x44)
 
 #define OP_ED_IM0(Byte)     ((0xFF & (Byte)) == 0x46)
 #define OP_ED_IM1(Byte)     ((0xFF & (Byte)) == 0x56)
 #define OP_ED_IM2(Byte)     ((0xFF & (Byte)) == 0x5E)
+
+#define OP_ED_IND(Byte)     ((0xFF & (Byte)) == 0xAA)
+#define OP_ED_INDR(Byte)    ((0xFF & (Byte)) == 0xBA)
+#define OP_ED_INI(Byte)     ((0xFF & (Byte)) == 0xA2)
+#define OP_ED_INIR(Byte)    ((0xFF & (Byte)) == 0xB2)
+
+#define OP_ED_LDD(Byte)     ((0xFF & (Byte)) == 0xA8)
+#define OP_ED_LDDR(Byte)    ((0xFF & (Byte)) == 0xB8)
+#define OP_ED_LDI(Byte)     ((0xFF & (Byte)) == 0xA0)
+#define OP_ED_LDIR(Byte)    ((0xFF & (Byte)) == 0xB0)
+
+#define OP_ED_OUTI(Byte)    ((0xFF & (Byte)) == 0xA3)
+#define OP_ED_OTIR(Byte)    ((0xFF & (Byte)) == 0xB3)
+#define OP_ED_OUTD(Byte)    ((0xFF & (Byte)) == 0xAB)
+#define OP_ED_OTDR(Byte)    ((0xFF & (Byte)) == 0xBB)
+#define OP_ED_OUTC_A(Byte)  ((0xFF & (Byte)) == 0x79)
+
+#define OP_ED_SBC_HL_BC(Byte)  ((0xFF & (Byte)) == 0x42)
+#define OP_ED_SBC_HL_DE(Byte)  ((0xFF & (Byte)) == 0x52)
+#define OP_ED_SBC_HL_HL(Byte)  ((0xFF & (Byte)) == 0x62)
+#define OP_ED_SBC_HL_SP(Byte)  ((0xFF & (Byte)) == 0x72)
 
 #define OP_ED_IN_R_C(Byte)  ((0xC7 & (Byte)) == 0x40)
 

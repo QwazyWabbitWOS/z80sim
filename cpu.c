@@ -811,9 +811,15 @@ void Disassemble(word* Address, char* Mnemonic) {
 	else if (OP_SUB_S(Opcode)) {
 		NameRegister(OperandS(Opcode), NameS);
 		if (OPMOD_CARRYIN(Opcode))
-			sprintf(Mnemonic, "sbc a, %s", NameS);
+			if (Indexing) 
+				sprintf(Mnemonic, "sbc a, %s0x%02x)", NameS, Memory[(*Address)++]);
+			else
+				sprintf(Mnemonic, "sbc a, %s", NameS);
 		else
-			sprintf(Mnemonic, "sub a, %s", NameS);
+			if (Indexing)
+				sprintf(Mnemonic, "sub a, %s0x%02x)", NameS, Memory[(*Address)++]);
+			else
+				sprintf(Mnemonic, "sub a, %s", NameS);
 	}
 	else if (OP_SUB_B(Opcode)) {
 		if (OPMOD_CARRYIN(Opcode))
@@ -862,14 +868,20 @@ void Disassemble(word* Address, char* Mnemonic) {
 	}
 	else if (OP_XOR_S(Opcode)) {
 		NameRegister(OperandS(Opcode), NameS);
-		sprintf(Mnemonic, "xor a, %s", NameS);
+		if (Indexing)
+			sprintf(Mnemonic, "xor a, %s0x%02x)", NameS, Memory[(*Address)++]);
+		else
+			sprintf(Mnemonic, "xor a, %s", NameS);
 	}
 	else if (OP_XOR_B(Opcode)) {
 		sprintf(Mnemonic, "xor a, 0x%02x", Memory[(*Address)++]);
 	}
 	else if (OP_OR_S(Opcode)) {
 		NameRegister(OperandS(Opcode), NameS);
-		sprintf(Mnemonic, "or a, %s", NameS);
+		if (Indexing)
+			sprintf(Mnemonic, "or a, %s0x%02x)", NameS, Memory[(*Address)++]);
+		else
+			sprintf(Mnemonic, "or a, %s", NameS);
 	}
 	else if (OP_OR_B(Opcode)) {
 		sprintf(Mnemonic, "or a, 0x%02x", Memory[(*Address)++]);
@@ -1139,6 +1151,60 @@ void Disassemble(word* Address, char* Mnemonic) {
 		}
 		else if (OP_ED_IM2(Opcode)) {
 			sprintf(Mnemonic, "im 2");
+		}
+		else if (OP_ED_IND(Opcode)) {
+			sprintf(Mnemonic, "ind");
+		}
+		else if (OP_ED_INDR(Opcode)) {
+			sprintf(Mnemonic, "indr");
+		}
+		else if (OP_ED_INI(Opcode)) {
+			sprintf(Mnemonic, "ini");
+		}
+		else if (OP_ED_INIR(Opcode)) {
+			sprintf(Mnemonic, "inir");
+		}
+		else if (OP_ED_LDD(Opcode)) {
+			sprintf(Mnemonic, "ldd");
+		}
+		else if (OP_ED_LDDR(Opcode)) {
+			sprintf(Mnemonic, "lddr");
+		}
+		else if (OP_ED_LDI(Opcode)) {
+			sprintf(Mnemonic, "ldi");
+		}
+		else if (OP_ED_LDIR(Opcode)) {
+			sprintf(Mnemonic, "ldir");
+		}
+		else if (OP_ED_NEG(Opcode)) {
+			sprintf(Mnemonic, "neg");
+		}
+		else if (OP_ED_OUTI(Opcode)) {
+		sprintf(Mnemonic, "outi");
+		}
+		else if (OP_ED_OTIR(Opcode)) {
+		sprintf(Mnemonic, "otir");
+		}
+		else if (OP_ED_OUTD(Opcode)) {
+		sprintf(Mnemonic, "outd");
+		}
+		else if (OP_ED_OTDR(Opcode)) {
+		sprintf(Mnemonic, "otdr");
+		}
+		else if (OP_ED_OUTC_A(Opcode)) {
+		sprintf(Mnemonic, "out (c), a");
+		}
+		else if (OP_ED_SBC_HL_BC(Opcode)) {
+		sprintf(Mnemonic, "sbc hl, bc");
+		}
+		else if (OP_ED_SBC_HL_DE(Opcode)) {
+		sprintf(Mnemonic, "sbc hl, de");
+		}
+		else if (OP_ED_SBC_HL_HL(Opcode)) {
+		sprintf(Mnemonic, "sbc hl, hl");
+		}
+		else if (OP_ED_SBC_HL_SP(Opcode)) {
+		sprintf(Mnemonic, "sbc hl, sp");
 		}
 		else if (OP_ED_IN_R_C(Opcode)) {
 			NameRegister(OperandR(Opcode), NameR);
