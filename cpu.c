@@ -811,7 +811,7 @@ void Disassemble(word* Address, char* Mnemonic) {
 	else if (OP_SUB_S(Opcode)) {
 		NameRegister(OperandS(Opcode), NameS);
 		if (OPMOD_CARRYIN(Opcode))
-			if (Indexing) 
+			if (Indexing)
 				sprintf(Mnemonic, "sbc a, %s0x%02x)", NameS, Memory[(*Address)++]);
 			else
 				sprintf(Mnemonic, "sbc a, %s", NameS);
@@ -854,7 +854,7 @@ void Disassemble(word* Address, char* Mnemonic) {
 	}
 	else if (OP_DEC_P(Opcode)) {
 		NameRegisterPair(OperandP(Opcode), NameP);
-			sprintf(Mnemonic, "dec %s", NameP);
+		sprintf(Mnemonic, "dec %s", NameP);
 	}
 	else if (OP_AND_S(Opcode)) {
 		NameRegister(OperandS(Opcode), NameS);
@@ -1083,29 +1083,18 @@ void Disassemble(word* Address, char* Mnemonic) {
 			LookupSymbol(FetchAddress(Address), Symbol);
 			sprintf(Mnemonic, "ld %s, (%s)", NameP, Symbol);
 		}
-		else if (OP_ED_LD_PW_SP(Opcode)) {
+		else if (OP_ED_LD_PW_P(Opcode)) {
+			NameRegisterPair(OperandP(Opcode), NameP);
 			LookupSymbol(FetchAddress(Address), Symbol);
-			sprintf(Mnemonic, "ld (%s), sp", Symbol);
+			sprintf(Mnemonic, "ld (%s), %s", Symbol, NameP);
 		}
-		else if (OP_ED_LD_PW_BC(Opcode)) {
-			LookupSymbol(FetchAddress(Address), Symbol);
-			sprintf(Mnemonic, "ld (%s), bc", Symbol);
+		else if (OP_ED_ADC_HL_P(Opcode)) {
+			NameRegisterPair(OperandP(Opcode), NameP);
+			sprintf(Mnemonic, "adc hl, %s", NameP);
 		}
-		else if (OP_ED_LD_PW_DE(Opcode)) {
-			LookupSymbol(FetchAddress(Address), Symbol);
-			sprintf(Mnemonic, "ld (%s), de", Symbol);
-		}
-		else if (OP_ED_ADC_HL_BC(Opcode)) {
-			sprintf(Mnemonic, "adc hl, bc");
-		}
-		else if (OP_ED_ADC_HL_DE(Opcode)) {
-			sprintf(Mnemonic, "adc hl, de");
-		}
-		else if (OP_ED_ADC_HL_HL(Opcode)) {
-			sprintf(Mnemonic, "adc hl, hl");
-		}
-		else if (OP_ED_ADC_HL_SP(Opcode)) {
-			sprintf(Mnemonic, "adc hl, sp");
+		else if (OP_ED_SBC_HL_P(Opcode)) {
+			NameRegisterPair(OperandP(Opcode), NameP);
+			sprintf(Mnemonic, "sbc hl, %s", NameP);
 		}
 		else if (OP_ED_R_A(Opcode)) {
 			sprintf(Mnemonic, "ld r, a");
@@ -1180,31 +1169,19 @@ void Disassemble(word* Address, char* Mnemonic) {
 			sprintf(Mnemonic, "neg");
 		}
 		else if (OP_ED_OUTI(Opcode)) {
-		sprintf(Mnemonic, "outi");
+			sprintf(Mnemonic, "outi");
 		}
 		else if (OP_ED_OTIR(Opcode)) {
-		sprintf(Mnemonic, "otir");
+			sprintf(Mnemonic, "otir");
 		}
 		else if (OP_ED_OUTD(Opcode)) {
-		sprintf(Mnemonic, "outd");
+			sprintf(Mnemonic, "outd");
 		}
 		else if (OP_ED_OTDR(Opcode)) {
-		sprintf(Mnemonic, "otdr");
+			sprintf(Mnemonic, "otdr");
 		}
 		else if (OP_ED_OUTC_A(Opcode)) {
-		sprintf(Mnemonic, "out (c), a");
-		}
-		else if (OP_ED_SBC_HL_BC(Opcode)) {
-		sprintf(Mnemonic, "sbc hl, bc");
-		}
-		else if (OP_ED_SBC_HL_DE(Opcode)) {
-		sprintf(Mnemonic, "sbc hl, de");
-		}
-		else if (OP_ED_SBC_HL_HL(Opcode)) {
-		sprintf(Mnemonic, "sbc hl, hl");
-		}
-		else if (OP_ED_SBC_HL_SP(Opcode)) {
-		sprintf(Mnemonic, "sbc hl, sp");
+			sprintf(Mnemonic, "out (c), a");
 		}
 		else if (OP_ED_IN_R_C(Opcode)) {
 			NameRegister(OperandR(Opcode), NameR);
@@ -1696,12 +1673,12 @@ trap Step() {
 			*OperandP(IReg) += (ReadMemory(Addr) << 8);
 			TStates += 20;
 		}
-		else if (OP_ED_LD_PW_SP(IReg)) {
+		else if (OP_ED_LD_PW_P(IReg)) {	// ld (word), rr
 			int Addr;
 			Addr = ReadMemory(PC.Word++);
 			Addr += ReadMemory(PC.Word++) << 8;
-			WriteMemory(Addr, SP.Bytes.L); Addr++;
-			WriteMemory(Addr, SP.Bytes.L);
+			WriteMemory(Addr++, *OperandP(IReg) & 0xff);
+			WriteMemory(Addr, *OperandP(IReg) >> 8);
 			TStates += 20;
 		}
 		else if (OP_ED_RRD(IReg)) {
@@ -1752,7 +1729,7 @@ trap Step() {
 		}
 	}
 	else {
-		fprintf(stdout, "ERROR: Unimplemented simple opcode %02x at %04x\n", IReg, PC.Word - 1);
+		fprintf(stdout, "ERROR: Unimplemented primary opcode %02x at %04x\n", IReg, PC.Word - 1);
 		Exception = TRAP_ILLEGAL;
 		UsefulInstruction = TRUE;
 	}

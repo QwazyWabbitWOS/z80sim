@@ -123,15 +123,10 @@
 
 #define OP_ED(Byte)         ((0xFF & (Byte)) == 0xED)
 
-#define OP_ED_LD_P_PW(Byte) ((0xCF & (Byte)) == 0x4B)
-#define OP_ED_LD_PW_BC(Byte) ((0xFF & (Byte)) == 0x43)
-#define OP_ED_LD_PW_DE(Byte) ((0xFF & (Byte)) == 0x53)
-#define OP_ED_LD_PW_SP(Byte) ((0xFF & (Byte)) == 0x73)
-
-#define OP_ED_ADC_HL_BC(Byte)     ((0xFF & (Byte)) == 0x4A)
-#define OP_ED_ADC_HL_DE(Byte)     ((0xFF & (Byte)) == 0x5A)
-#define OP_ED_ADC_HL_HL(Byte)     ((0xFF & (Byte)) == 0x6A)
-#define OP_ED_ADC_HL_SP(Byte)     ((0xFF & (Byte)) == 0x7A)
+#define OP_ED_ADC_HL_P(Byte) ((0xCF & (Byte)) == 0x4A)
+#define OP_ED_LD_P_PW(Byte)  ((0xCF & (Byte)) == 0x4B)
+#define OP_ED_SBC_HL_P(Byte) ((0xCF & (Byte)) == 0x42)
+#define OP_ED_LD_PW_P(Byte)  ((0xCF & (Byte)) == 0x43)
 
 #define OP_ED_R_A(Byte)     ((0xFF & (Byte)) == 0x4F)
 #define OP_ED_A_R(Byte)     ((0xFF & (Byte)) == 0x5F)
@@ -170,11 +165,6 @@
 #define OP_ED_OUTD(Byte)    ((0xFF & (Byte)) == 0xAB)
 #define OP_ED_OTDR(Byte)    ((0xFF & (Byte)) == 0xBB)
 #define OP_ED_OUTC_A(Byte)  ((0xFF & (Byte)) == 0x79)
-
-#define OP_ED_SBC_HL_BC(Byte)  ((0xFF & (Byte)) == 0x42)
-#define OP_ED_SBC_HL_DE(Byte)  ((0xFF & (Byte)) == 0x52)
-#define OP_ED_SBC_HL_HL(Byte)  ((0xFF & (Byte)) == 0x62)
-#define OP_ED_SBC_HL_SP(Byte)  ((0xFF & (Byte)) == 0x72)
 
 #define OP_ED_IN_R_C(Byte)  ((0xC7 & (Byte)) == 0x40)
 
