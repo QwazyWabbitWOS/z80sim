@@ -36,6 +36,7 @@
 #define OP_LD_A_PDE(Byte)   ((0xFF & (Byte)) == 0x1A)
 #define OP_LD_A_PW(Byte)    ((0xFF & (Byte)) == 0x3A)
 #define OP_LD_PW_A(Byte)    ((0xFF & (Byte)) == 0x32)
+#define OP_LD_PW_HL(Byte)   ((0xFF & (Byte)) == 0x22)
 #define OP_LD_HL_PW(Byte)   ((0xFF & (Byte)) == 0x2A)
 #define OP_LD_PBC_A(Byte)   ((0xFF & (Byte)) == 0x02)
 #define OP_LD_PDE_A(Byte)   ((0xFF & (Byte)) == 0x12)
@@ -123,6 +124,8 @@
 #define OP_ED(Byte)         ((0xFF & (Byte)) == 0xED)
 
 #define OP_ED_LD_P_PW(Byte) ((0xCF & (Byte)) == 0x4B)
+#define OP_ED_LD_PW_BC(Byte) ((0xFF & (Byte)) == 0x43)
+#define OP_ED_LD_PW_DE(Byte) ((0xFF & (Byte)) == 0x53)
 #define OP_ED_LD_PW_SP(Byte) ((0xFF & (Byte)) == 0x73)
 
 #define OP_ED_ADC_HL_BC(Byte)     ((0xFF & (Byte)) == 0x4A)
