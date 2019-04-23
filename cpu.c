@@ -82,12 +82,12 @@ logic FlagM, FlagP;
 logic FlagN, FlagH;
 logic Flag3, Flag5;
 
-unsigned long TStates;
+unsigned long TStates;	// Total T-states processed
 unsigned long InstructionsExecuted;
 
 logic UsefulInstruction;
 
-logic Indexing;
+logic Indexing;	// TRUE when we decoded IX or IY opcode prefixes
 logic IndirectMemoryWrite;
 logic MemoryWrite;
 byte MemoryData;
@@ -1071,97 +1071,75 @@ void Disassemble(word* Address, char* Mnemonic) {
 				sprintf(Mnemonic, "??? OP_CB 0x%02x", Opcode);	// undecoded CBxx
 			}
 		}
+		/* Most of these are undocumented but we disassemble them anyway.
+		 Many assemblers implement the undocumented instructions.
+		 Normally, no C compiler will produce them.
+		 A nice instruction set table can be found at http://www.clrhome.org/table/
+		 */
 		else {  // Indexing && Opcode == CB
+			char *DestS;
 			byte offset = Memory[(*Address)++];
 			Opcode = Memory[(*Address)++];
+			if (PointerReg == &IX)
+				DestS = "(ix + ";
+			else
+				DestS = "(iy + ";
+
 			if (OP_CB_RLC(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
 				if (Opcode == 0x06)
 					sprintf(Mnemonic, "rlc %s0x%02x)", NameS, offset);
-				else {
-					if (PointerReg == &IX)
-						sprintf(Mnemonic, "rlc (ix + 0x%02x), %s", offset, NameS);
-					else
-						sprintf(Mnemonic, "rlc (iy + 0x%02x), %s", offset, NameS);
-				}
+				else
+					sprintf(Mnemonic, "rlc %s0x%02x), %s", DestS, offset, NameS);
 			}
 			else if (OP_CB_RRC(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
 				if (Opcode == 0x0e)
 					sprintf(Mnemonic, "rrc %s0x%02x)", NameS, offset);
-				else {
-					if (PointerReg == &IX)
-						sprintf(Mnemonic, "rrc (ix + 0x%02x), %s", offset, NameS);
-					else
-						sprintf(Mnemonic, "rrc (iy + 0x%02x), %s", offset, NameS);
-				}
+				else
+					sprintf(Mnemonic, "rrc %s0x%02x), %s", DestS, offset, NameS);
 			}
 			else if (OP_CB_RL(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
 				if (Opcode == 0x16)
 					sprintf(Mnemonic, "rl %s0x%02x)", NameS, offset);
-				else {
-					if (PointerReg == &IX)
-						sprintf(Mnemonic, "rl (ix + 0x%02x), %s", offset, NameS);
-					else
-						sprintf(Mnemonic, "rl (iy + 0x%02x), %s", offset, NameS);
-				}
+				else
+					sprintf(Mnemonic, "rl %s0x%02x), %s", DestS, offset, NameS);
 			}
 			else if (OP_CB_RR(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
 				if (Opcode == 0x1e)
 					sprintf(Mnemonic, "rr %s0x%02x)", NameS, offset);
-				else {
-					if (PointerReg == &IX)
-						sprintf(Mnemonic, "rr (ix + 0x%02x), %s", offset, NameS);
-					else
-						sprintf(Mnemonic, "rr (iy + 0x%02x), %s", offset, NameS);
-				}
+				else
+					sprintf(Mnemonic, "rr %s0x%02x), %s", DestS, offset, NameS);
 			}
 			else if (OP_CB_SLA(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
 				if (Opcode == 0x26)
 					sprintf(Mnemonic, "sla %s0x%02x)", NameS, offset);
-				else {
-					if (PointerReg == &IX)
-						sprintf(Mnemonic, "sla (ix + 0x%02x), %s", offset, NameS);
-					else
-						sprintf(Mnemonic, "sla (iy + 0x%02x), %s", offset, NameS);
-				}
+				else
+					sprintf(Mnemonic, "sla %s0x%02x), %s", DestS, offset, NameS);
 			}
 			else if (OP_CB_SRA(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
 				if (Opcode == 0x2e)
 					sprintf(Mnemonic, "sra %s0x%02x)", NameS, offset);
-				else {
-					if (PointerReg == &IX)
-						sprintf(Mnemonic, "sra (ix + 0x%02x), %s", offset, NameS);
-					else
-						sprintf(Mnemonic, "sra (iy + 0x%02x), %s", offset, NameS);
-				}
+				else
+					sprintf(Mnemonic, "sra %s0x%02x), %s", DestS, offset, NameS);
 			}
 			else if (OP_CB_SLL(Opcode)) {	// undocumented Shift Left Logical
 				NameRegister(OperandS(Opcode), NameS);
-				if (Opcode == 0x36) {
+				if (Opcode == 0x36)
 					sprintf(Mnemonic, "sll %s0x%02x)", NameS, offset);
-				}
-				else {
-					if (PointerReg == &IX)
-						sprintf(Mnemonic, "sll (ix + 0x%02x), %s", offset, NameS);
-					else
-						sprintf(Mnemonic, "sll (iy + 0x%02x), %s", offset, NameS);
-				}
+				else
+					sprintf(Mnemonic, "sll %s0x%02x), %s", DestS, offset, NameS);
 			}
-			else if (OP_CB_SRL(Opcode)) {	// documented Shift Right Logical
+			else if (OP_CB_SRL(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
 				if (Opcode == 0x3e)
 					sprintf(Mnemonic, "srl %s0x%02x)", NameS, offset);
-				else {
-					if (PointerReg == &IX)
-						sprintf(Mnemonic, "srl (ix + 0x%02x), %s", offset, NameS);
-					else
-						sprintf(Mnemonic, "srl (iy + 0x%02x), %s", offset, NameS);
-				}
+				else
+					sprintf(Mnemonic, "srl %s0x%02x), %s", DestS, offset, NameS);
 			}
 			else if (OP_CB_BIT_N_S(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
@@ -1176,7 +1154,7 @@ void Disassemble(word* Address, char* Mnemonic) {
 				sprintf(Mnemonic, "set %d, %s0x%02x)", OPPARM_N(Opcode) >> 3, NameS, offset);
 			}
 			else {
-				Opcode = Memory[(*Address)++]; // undecoded DDCBddxx
+				Opcode = Memory[(*Address)++]; // Any undecoded DDCBddxx or FDCBddxx
 				sprintf(Mnemonic, "??? DD/FD CB 0x%02x 0x%02x", Opcode, Memory[(*Address)++]);
 			}
 		}
