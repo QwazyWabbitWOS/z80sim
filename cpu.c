@@ -1263,7 +1263,7 @@ void Disassemble(word* Address, char* Mnemonic) {
 		else if (OP_ED_OTDR(Opcode)) {
 			sprintf(Mnemonic, "otdr");
 		}
-		else if (OP_ED_OUTC_R(Opcode)) {
+		else if (OP_ED_OUT_C_R(Opcode)) {
 		NameRegister(OperandR(Opcode), NameR);
 		sprintf(Mnemonic, "out (c), %s", NameR);
 		}
