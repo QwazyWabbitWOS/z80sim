@@ -164,8 +164,8 @@
 #define OP_ED_OTIR(Byte)    ((0xFF & (Byte)) == 0xB3)
 #define OP_ED_OUTD(Byte)    ((0xFF & (Byte)) == 0xAB)
 #define OP_ED_OTDR(Byte)    ((0xFF & (Byte)) == 0xBB)
-#define OP_ED_OUTC_A(Byte)  ((0xFF & (Byte)) == 0x79)
 
+#define OP_ED_OUTC_R(Byte)  ((0xC7 & (Byte)) == 0x41)
 #define OP_ED_IN_R_C(Byte)  ((0xC7 & (Byte)) == 0x40)
 
 #define OPMOD_CARRYIN(Byte) ((0xA8 & (Byte)) == 0x88)

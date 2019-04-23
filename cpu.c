@@ -1051,7 +1051,7 @@ void Disassemble(word* Address, char* Mnemonic) {
 				NameRegister(OperandS(Opcode), NameS);
 				sprintf(Mnemonic, "sll %s", NameS);
 			}
-			else if (OP_CB_SRL(Opcode)) {	// documented Shift Right Logical
+			else if (OP_CB_SRL(Opcode)) {
 				NameRegister(OperandS(Opcode), NameS);
 				sprintf(Mnemonic, "srl %s", NameS);
 			}
@@ -1285,8 +1285,9 @@ void Disassemble(word* Address, char* Mnemonic) {
 		else if (OP_ED_OTDR(Opcode)) {
 			sprintf(Mnemonic, "otdr");
 		}
-		else if (OP_ED_OUTC_A(Opcode)) {
-			sprintf(Mnemonic, "out (c), a");
+		else if (OP_ED_OUTC_R(Opcode)) {
+		NameRegister(OperandR(Opcode), NameR);
+		sprintf(Mnemonic, "out (c), %s", NameR);
 		}
 		else if (OP_ED_IN_R_C(Opcode)) {
 			NameRegister(OperandR(Opcode), NameR);
