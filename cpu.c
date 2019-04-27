@@ -654,12 +654,12 @@ void SnapshotState(FILE* Handle) {
 	InstructionAddress = PC.Word;
 	fprintf(Handle, "Frame %ld Begin\n", InstructionsExecuted);
 	fprintf(Handle, "\tPC <0x%04x> SP <0x%04x>\n", PC.Word, SP.Word);
-	fprintf(Handle, "\tA <0x%02x>\n", AF.Bytes.H);
-	fprintf(Handle, "\tfS <%d> fZ <%d> f5 <%d> fH <%d> f3 <%d> fP <%d> fN <%d> fC <%d>\n",
-		((AF.Bytes.L >> 7) & 1), ((AF.Bytes.L >> 6) & 1),
-		((AF.Bytes.L >> 5) & 1), ((AF.Bytes.L >> 4) & 1),
-		((AF.Bytes.L >> 3) & 1), ((AF.Bytes.L >> 2) & 1),
-		((AF.Bytes.L >> 1) & 1), ((AF.Bytes.L >> 7) & 0));
+	fprintf(Handle, "\tAF <0x%04x>", AF.Word);
+	fprintf(Handle, "\t<%c%c%c%c%c%c%c%c>\n",
+		(AF.Bytes.L >> 7 & 1) ? 'S' : '-', (AF.Bytes.L >> 6 & 1) ? 'Z' : '-',
+		(AF.Bytes.L >> 5 & 1) ? '5' : '-', (AF.Bytes.L >> 4 & 1) ? 'H' : '-',
+		(AF.Bytes.L >> 3 & 1) ? '3' : '-', (AF.Bytes.L >> 2 & 1) ? 'P' : '-',
+		(AF.Bytes.L >> 1 & 1) ? 'N' : '-', (AF.Bytes.L >> 0 & 1) ? 'C' : '-');
 	fprintf(Handle, "\tHL <0x%04x>\n", HL.Word);
 	fprintf(Handle, "\tIX <0x%04x> IY <0x%04x>\n", IX.Word, IY.Word);
 	fprintf(Handle, "\tBC <0x%04x> DE <0x%04x>\n", BC.Word, DE.Word);
