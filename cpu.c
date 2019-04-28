@@ -509,7 +509,7 @@ void NameRegister(byte* Register, char* Name) {
 // Store a string in Name containing the human-readable name of the
 // register pair at address *Register.
 //
-void NameRegisterPair(word* Register, char* Name) {
+void NameRegisterPair(word * Register, char* Name) {
 	if (Register == &AF.Word)
 		strcpy(Name, "af");
 	else if (Register == &BC.Word)
@@ -676,13 +676,13 @@ void SnapshotState(FILE* Handle) {
 }
 
 
-void PrintRegisters(FILE *Handle) {
+void PrintRegisters(FILE * Handle) {
 	fprintf(Handle, "SP:%04x AF:%04x BC:%04x DE:%04x HL:%04x IX:%04x IY:%04x",
 		SP.Word, AF.Word, BC.Word, DE.Word, HL.Word, IX.Word, IY.Word);
 }
 
 
-word FetchAddress(word* Address) {
+word FetchAddress(word * Address) {
 	word target;
 	target = Memory[(*Address)++];
 	target += Memory[(*Address)++] << 8;
@@ -691,7 +691,7 @@ word FetchAddress(word* Address) {
 
 // Disassemble the Z80 instruction starting at Address.
 // return the disassembly string in Mnemonic
-void Disassemble(word* Address, char* Mnemonic) {
+void Disassemble(word * Address, char* Mnemonic) {
 	char NameR[MAX_NAME], NameS[MAX_NAME],
 		NameP[MAX_NAME], NameI[MAX_NAME],
 		NameF[MAX_NAME], Symbol[MAX_NAME];
@@ -1077,7 +1077,7 @@ void Disassemble(word* Address, char* Mnemonic) {
 		 A nice instruction set table can be found at http://www.clrhome.org/table/
 		 */
 		else {  // Indexing && Opcode == CB
-			char *DestS;
+			char* DestS;
 			byte offset = Memory[(*Address)++];
 			Opcode = Memory[(*Address)++];
 			if (PointerReg == &IX)
@@ -1264,8 +1264,8 @@ void Disassemble(word* Address, char* Mnemonic) {
 			sprintf(Mnemonic, "otdr");
 		}
 		else if (OP_ED_OUT_C_R(Opcode)) {
-		NameRegister(OperandR(Opcode), NameR);
-		sprintf(Mnemonic, "out (c), %s", NameR);
+			NameRegister(OperandR(Opcode), NameR);
+			sprintf(Mnemonic, "out (c), %s", NameR);
 		}
 		else if (OP_ED_IN_R_C(Opcode)) {
 			NameRegister(OperandR(Opcode), NameR);
