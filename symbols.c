@@ -61,11 +61,12 @@ logic LoadSymbols(FILE* Handle) {
 	char Line[MAX_STRING] = { 0 };
 	char Name[MAX_NAME] = { 0 };
 	word Address;
+	int scan;
 	if (!Handle) return FALSE;
 	while (fgets(Line, MAX_STRING, Handle)) {
 		if (strlen(Line) > 7)
 			if (Line[2] == ':' && Line[7] == ' ') {
-				sscanf(Line, "00:%04hx %s", &Address, Name);
+				scan = sscanf(Line, "00:%04hx %s", &Address, Name);
 				if (Symbols[Address] == NULL || (!InString(Name, "_start") && !InString(Name, "_end"))) {
 					Symbols[Address] = malloc(strlen(Name) + 1);
 					if (Symbols[Address] == NULL)
@@ -79,20 +80,22 @@ logic LoadSymbols(FILE* Handle) {
 
 static FILE* Handles[MAX_SOURCES];
 
-logic LoadSourcePointers(FILE* Handle) {
+logic LoadSourcePointers(FILE * Handle) {
 	char Line[MAX_STRING] = { 0 };
 	char Token[MAX_NAME] = { 0 };
 	char FileName[MAX_NAME] = { 0 };
-
+	int scan;
 	while (fgets(Line, MAX_STRING, Handle)) {
-		sscanf(Line, "%s", Token);
-		if (!strcmp(Token, "Sources")) break;
+		scan = sscanf(Line, "%s", Token);
+		if (!strcmp(Token, "Sources"))
+			break;
 	}
 	while (fgets(Line, MAX_STRING, Handle)) {
 		int FileNumber;
-		sscanf(Line, "%s", Token);
-		if (!strcmp(Token, "EndSources")) break;
-		sscanf(Line, "%d %s", &FileNumber, &FileName);
+		scan = sscanf(Line, "%s", Token);
+		if (!strcmp(Token, "EndSources"))
+			break;
+		scan = sscanf(Line, "%d %s", &FileNumber, &FileName);
 		Handles[FileNumber] = fopen(FileName, "r");
 		if (!Handles[FileNumber])
 			fprintf(stderr, "Could NOT open %s, file number %d\n", FileName, FileNumber);
@@ -101,7 +104,7 @@ logic LoadSourcePointers(FILE* Handle) {
 		int FileNumber;
 		int Address;
 		unsigned int SourceLine;
-		sscanf(Line, "%x S %d %d", &Address, &FileNumber, &SourceLine);
+		scan = sscanf(Line, "%x S %d %d", &Address, &FileNumber, &SourceLine);
 		Address %= SIZE_MEMORY;
 		SourceCode[Address].File = Handles[FileNumber];
 		SourceCode[Address].Line = SourceLine;
