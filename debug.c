@@ -186,7 +186,8 @@ void ExecuteEval(const char* Parameters) {
 void ExecuteDisasm(const char* Parameters) {
 	word Start = 0;
 	word End = 0;
-	char StartStr[MAX_STRING] = "", EndStr[MAX_STRING] = "";
+	char StartStr[MAX_STRING] = "";
+	char EndStr[MAX_STRING] = "";
 	const char* OtherTokens = Parameters;
 	if (!ExtractFreeform(DebugTokens, &OtherTokens, StartStr))
 	{
@@ -196,8 +197,7 @@ void ExecuteDisasm(const char* Parameters) {
 	else {
 		ExtractFreeform(DebugTokens, &OtherTokens, EndStr);
 		Start = (word)strtoul(StartStr, NULL, 0);
-		if (EndStr != NULL)
-			End = (word)strtoul(EndStr, NULL, 0);
+		End = (word)strtoul(EndStr, NULL, 0);
 		word i;
 		if (End <= Start)
 			End = Start + 1;
@@ -216,8 +216,8 @@ void ExecuteDisasm(const char* Parameters) {
 void ExecuteExamine(const char* Parameters) {
 	word Start = 0;
 	word End = 0;
-	word i = 0;
-	char StartStr[MAX_STRING] = "", EndStr[MAX_STRING] = "";
+	char StartStr[MAX_STRING] = "";
+	char EndStr[MAX_STRING] = "";
 	const char* OtherTokens = Parameters;
 	if (!ExtractFreeform(DebugTokens, &OtherTokens, StartStr))
 	{
@@ -227,11 +227,10 @@ void ExecuteExamine(const char* Parameters) {
 	else {
 		ExtractFreeform(DebugTokens, &OtherTokens, EndStr);
 		Start = (word)strtoul(StartStr, NULL, 0);
-		if (EndStr != NULL)
-			End = (word)strtoul(EndStr, NULL, 0);
+		End = (word)strtoul(EndStr, NULL, 0);
 		if (End <= Start)
 			End = Start;
-		i = Start;
+		word i = Start;
 		while (i <= End && i != 0xffff)
 		{
 			fprintf(stdout, "%04x: ", i);
