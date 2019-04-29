@@ -25,6 +25,7 @@
 #define CMD_DISABLE 13
 #define CMD_HELP    14
 #define CMD_RESET   15
+#define CMD_EXAMINE 16
 
 #define CMD_INFO_WATCHPOINTS 100
 #define CMD_INFO_WARRANTY    101
@@ -38,6 +39,7 @@
 #define LEX_WATCH            "watch"
 #define LEX_EVAL             "eval"
 #define LEX_DISASM           "disasm"
+#define LEX_EXAMINE          "exam"
 #define LEX_STACK            "stack"
 #define LEX_IRQ              "irq"
 #define LEX_NAME             "name"
@@ -78,6 +80,7 @@ void InitDebugger(void) {
 	CreateToken(DebugTokens, LEX_WATCH, CMD_WATCH);
 	CreateToken(DebugTokens, LEX_EVAL, CMD_EVAL);
 	CreateToken(DebugTokens, LEX_DISASM, CMD_DISASM);
+	CreateToken(DebugTokens, LEX_EXAMINE, CMD_EXAMINE);
 	CreateToken(DebugTokens, LEX_STACK, CMD_STACK);
 	CreateToken(DebugTokens, LEX_IRQ, CMD_IRQ);
 	CreateToken(DebugTokens, LEX_NAME, CMD_NAME);
@@ -173,34 +176,66 @@ void ExecuteEval(const char* Parameters) {
 		char Expression[MAX_STRING];
 		StringifyExpression(Representation, Expression);
 		fprintf(stdout, "%s evaluates to ", Expression);
-		PrintValue(stdout, EvaluateExpression(Representation)); fprintf(stdout, "\n");
+		PrintValue(stdout, EvaluateExpression(Representation));
+		fprintf(stdout, "\n");
 		FreeExpression(Representation);
 	}
 }
 
-// Disassemble from Start to End both addresses required.
+// Disassemble from Start to End, end address optional.
 void ExecuteDisasm(const char* Parameters) {
-	char StartStr[MAX_STRING], EndStr[MAX_STRING];
-	const char *OtherTokens = Parameters;
-	if (!ExtractFreeform(DebugTokens, &OtherTokens, StartStr) ||
-		!ExtractFreeform(DebugTokens, &OtherTokens, EndStr))
+	word Start = 0;
+	word End = 0;
+	char StartStr[MAX_STRING] = "", EndStr[MAX_STRING] = "";
+	const char* OtherTokens = Parameters;
+	if (!ExtractFreeform(DebugTokens, &OtherTokens, StartStr))
 	{
-		fprintf(stdout, "Syntax: disasm <start-addr> <end-addr>\n");
+		fprintf(stdout, "Syntax: disasm start-addr <end-addr>\n");
 		return;
 	}
 	else {
-		word Start = (word)strtol(StartStr, NULL, 0);
-		word End = (word)strtol(EndStr, NULL, 0);
+		ExtractFreeform(DebugTokens, &OtherTokens, EndStr);
+		Start = (word)strtoul(StartStr, NULL, 0);
+		if (EndStr != "")
+			End = (word)strtoul(EndStr, NULL, 0);
 		word i;
 		if (End <= Start)
 			End = Start + 1;
 		i = Start;
-		while (i <= End)
+		while (i <= End && i != 0xffff)
 		{
 			char Mnemonic[MAX_STRING];
 			fprintf(stdout, "%04x: ", i);
 			Disassemble(&i, Mnemonic);
 			fprintf(stdout, "%s\n", Mnemonic);
+		}
+	}
+}
+
+// Examine memory from Start to End, end address optional.
+void ExecuteExamine(const char* Parameters) {
+	word Start = 0;
+	word End = 0;
+	word i = 0;
+	char StartStr[MAX_STRING] = "", EndStr[MAX_STRING] = "";
+	const char* OtherTokens = Parameters;
+	if (!ExtractFreeform(DebugTokens, &OtherTokens, StartStr))
+	{
+		fprintf(stdout, "Syntax: "LEX_EXAMINE" start-addr <end-addr>\n");
+		return;
+	}
+	else {
+		ExtractFreeform(DebugTokens, &OtherTokens, EndStr);
+		Start = (word)strtoul(StartStr, NULL, 0);
+		if (EndStr != "")
+			End = (word)strtoul(EndStr, NULL, 0);
+		if (End <= Start)
+			End = Start;
+		i = Start;
+		while (i <= End && i != 0xffff)
+		{
+			fprintf(stdout, "%04x: ", i);
+			fprintf(stdout, "%02x\n", GetMemoryByte(i++));
 		}
 	}
 }
@@ -264,7 +299,7 @@ void ExecuteDisable(const char* Parameters) {
 	}
 }
 
-void ShowTrace(word Addr, char * Mnemonic)
+void ShowTrace(word Addr, char* Mnemonic)
 {
 	PrintRegisters(stdout);
 	fprintf(stdout, "  -  %04x: ", Addr);
@@ -318,7 +353,8 @@ logic Debugger() {
 			fprintf(stdout, "\t%s\t%s\n", LEX_STEPI, "Single-step the next C line");
 			fprintf(stdout, "\t%s\t%s\n", LEX_WATCH, "Set watchpoint");
 			fprintf(stdout, "\t%s\t%s\n", LEX_EVAL, "Evaluate expression [<expression>]");
-			fprintf(stdout, "\t%s\t%s\n", LEX_DISASM, "Disassemble ("LEX_DISASM" addr addr)");
+			fprintf(stdout, "\t%s\t%s\n", LEX_DISASM, "Disassemble ("LEX_DISASM" addr <addr>)");
+			fprintf(stdout, "\t%s\t%s\n", LEX_EXAMINE, "Examine memory ("LEX_EXAMINE" addr <addr>)");
 			fprintf(stdout, "\t%s\t%s\n", LEX_STACK, "Display stack pointer ("LEX_STACK" [<expression>])");
 			fprintf(stdout, "\t%s\t%s\n", LEX_IRQ, "");
 			fprintf(stdout, "\t%s\t%s\n", LEX_NAME, "");
@@ -347,6 +383,9 @@ logic Debugger() {
 			break;
 		case CMD_DISASM:
 			ExecuteDisasm(OtherTokens);
+			break;
+		case CMD_EXAMINE:
+			ExecuteExamine(OtherTokens);
 			break;
 		case CMD_STACK:
 			ExecuteStack(OtherTokens);

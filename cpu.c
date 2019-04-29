@@ -151,7 +151,7 @@ void StoreFlags() {
 
 // Set the Flag* variables depending on the contents of Datum, except those
 // that cannot be inferred from it alone. Don't set the actual F register.
-// Also calculate parity and store it into FlagPE/FlagPO if GiveParity==TRUE.
+// Also calculate parity and store it into FlagP/FlagPO if GiveParity==TRUE.
 //
 void SetFlags(byte Datum) {
 	Flag3 = (Datum & 0x08) != 0;
@@ -558,16 +558,14 @@ void ResetCPU(void)
 	HL1.Word = 0;
 	/* Note: 
 	* This flag state setup is not documented Z80 behavior on reset.
-	* Leave in until flag operations are debugged. 	
+	* Per Zilog manual, AF = 0xffff at reset. 
+	* Real Z80 flags remain 0xff until opcode affecting flags changes them.
+	* Asserts in StoreFlags function will trap in that state.
+	* Initialize the emulator's flags here to accord with the state 
+	* of accumulator but don't touch the F register.
 	*/
-	FlagNZ = !(FlagZ = 0);
-	FlagNC = !(FlagC = 0);
-	FlagPO = !(FlagP = 0);
-	FlagPS = !(FlagMS = 0);
-	Flag3 = 0;
-	Flag5 = 0;
-	FlagN = 0;
-	FlagH = 0;
+	SetFlags(AF.Bytes.L);
+	FlagNC = !FlagC;
 	TStates = 0;
 	InstructionsExecuted = 0;
 	fprintf(stdout, "Z80 initialized\n");
