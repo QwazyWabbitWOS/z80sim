@@ -196,7 +196,7 @@ void ExecuteDisasm(const char* Parameters) {
 	else {
 		ExtractFreeform(DebugTokens, &OtherTokens, EndStr);
 		Start = (word)strtoul(StartStr, NULL, 0);
-		if (EndStr != "")
+		if (EndStr != NULL)
 			End = (word)strtoul(EndStr, NULL, 0);
 		word i;
 		if (End <= Start)
@@ -227,7 +227,7 @@ void ExecuteExamine(const char* Parameters) {
 	else {
 		ExtractFreeform(DebugTokens, &OtherTokens, EndStr);
 		Start = (word)strtoul(StartStr, NULL, 0);
-		if (EndStr != "")
+		if (EndStr != NULL)
 			End = (word)strtoul(EndStr, NULL, 0);
 		if (End <= Start)
 			End = Start;
