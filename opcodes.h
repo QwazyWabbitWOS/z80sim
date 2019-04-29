@@ -200,8 +200,8 @@
 #define OPARG_F_C(Byte)     ((0x38 & (Byte)) == 0x18)
 #define OPARG_F_PO(Byte)    ((0x38 & (Byte)) == 0x20)
 #define OPARG_F_PE(Byte)    ((0x38 & (Byte)) == 0x28)
-#define OPARG_F_P(Byte)     ((0x38 & (Byte)) == 0x30)
-#define OPARG_F_M(Byte)     ((0x38 & (Byte)) == 0x38)
+#define OPARG_F_PS(Byte)     ((0x38 & (Byte)) == 0x30)
+#define OPARG_F_MS(Byte)     ((0x38 & (Byte)) == 0x38)
 
 #define OPARG_SF_NZ(Byte)   ((0x18 & (Byte)) == 0x00)
 #define OPARG_SF_Z(Byte)    ((0x18 & (Byte)) == 0x08)

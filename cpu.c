@@ -77,10 +77,10 @@ logic IFF1, IFF2;
 
 logic FlagZ, FlagNZ;
 logic FlagC, FlagNC;
-logic FlagPO, FlagPE;
-logic FlagM, FlagP;
+logic FlagP, FlagPO;
+logic FlagMS, FlagPS;
 logic FlagN, FlagH;
-logic Flag3, Flag5;
+logic Flag3, Flag5;		// Undocumented flags
 
 unsigned long TStates;	// Total T-states processed
 unsigned long InstructionsExecuted;
@@ -134,17 +134,17 @@ inline logic Parity(byte Byte) {
 void StoreFlags() {
 	assert(FlagZ == !FlagNZ);
 	assert(FlagC == !FlagNC);
-	assert(FlagPE == !FlagPO);
-	assert(FlagP == !FlagM);
+	assert(FlagP == !FlagPO);
+	assert(FlagPS == !FlagMS);
 	AF.Bytes.L = (
 		(FlagC ? (1 << 0) : 0) |
 		(FlagN ? (1 << 1) : 0) |
-		(FlagPE ? (1 << 2) : 0) |
+		(FlagP ? (1 << 2) : 0) |
 		(Flag3 ? (1 << 3) : 0) |
 		(FlagH ? (1 << 4) : 0) |
 		(Flag5 ? (1 << 5) : 0) |
 		(FlagZ ? (1 << 6) : 0) |
-		(FlagM ? (1 << 7) : 0)
+		(FlagMS ? (1 << 7) : 0)
 		);
 }
 
@@ -158,34 +158,28 @@ void SetFlags(byte Datum) {
 	Flag5 = (Datum & 0x20) != 0;
 	if (Datum == 0) FlagZ = 1; else FlagZ = 0;
 	FlagNZ = !FlagZ;
-	FlagP = !SignBit(Datum);
-	FlagM = !FlagP;
-	FlagPE = Parity(Datum);
-	FlagPO = !FlagPE;
+	FlagPS = !SignBit(Datum);
+	FlagMS = !FlagPS;
+	FlagP = Parity(Datum);
+	FlagPO = !FlagP;
 }
 
 
 // Add Operand to *Register, and store the result into *Register. Set the Flag*
 // variables accordingly.
 //
-void AddByte(byte* Register, byte Operand) {
+void AddByte(byte * Register, byte Operand) {
 	byte Op1 = *Register, Op2 = Operand;
 	long Sum;
 
 	Sum = Op1 + Op2;
 	*Register = (byte)Sum;
 	SetFlags(*Register);
-	if ((Op1 & 0x08) ^ (Op2 & 0x08) ^ (Sum & 0x08))
-		FlagH = 1;
-	else FlagH = 0;
-	if (Sum > (word)0xFF)
-		FlagNC = !(FlagC = 1);
-	else
-		FlagC = !(FlagNC = 1);
-	if (SignBit(Op1) == SignBit(Op2) && SignBit((byte)Sum) != SignBit(Op1))
-		FlagPO = !(FlagPE = 1);
-	else
-		FlagPO = !(FlagPE = 0);
+	FlagH = ((Op1 & 0x08) ^ (Op2 & 0x08) ^ (Sum & 0x08));
+	FlagC = (Sum > (word)0xFF);
+	FlagNC = !FlagC;
+	FlagP = (SignBit(Op1) == SignBit(Op2) && SignBit((byte)Sum) != SignBit(Op1));
+	FlagPO = !FlagP;
 	FlagN = 0;
 	TStates += 4;
 }
@@ -194,24 +188,18 @@ void AddByte(byte* Register, byte Operand) {
 // Subtract Operand from *Register, and store the result into *Register. Set the Flag*
 // variables accordingly.
 //
-void SubByte(byte* Register, byte Operand) {
+void SubByte(byte * Register, byte Operand) {
 	byte Op1 = *Register, Op2 = -Operand;
 	long Sum;
 
 	Sum = Op1 + Op2;
 	*Register = (byte)Sum;
 	SetFlags(*Register);
-	if ((Op1 & 0x08) ^ (Op2 & 0x08) ^ (Sum & 0x08)) FlagH = 0; else FlagH = 1;
-
-	if (Sum > (word)0xFF)
-		FlagNC = !(FlagC = 0);
-	else
-		FlagC = !(FlagNC = 0);
-
-	if (SignBit(Op1) == SignBit(Op2) && SignBit((byte)Sum) != SignBit(Op1))
-		FlagPO = !(FlagPE = 1);
-	else
-		FlagPO = !(FlagPE = 0);
+	FlagH = ((Op1 & 0x08) ^ (Op2 & 0x08) ^ (Sum & 0x08));
+	FlagC = (Sum > (word)0xFF);
+	FlagNC = !FlagC;
+	FlagP = (SignBit(Op1) == SignBit(Op2) && SignBit((byte)Sum) != SignBit(Op1));
+	FlagPO = !FlagP;
 	FlagN = 0;
 	TStates += 4;
 }
@@ -220,16 +208,13 @@ void SubByte(byte* Register, byte Operand) {
 // As per AddByte(), but do it for two words, and only set the flags required by
 // a word addition.
 //
-void AddWord(word* Register, word Operand) {
+void AddWord(word * Register, word Operand) {
 	long Sum;
 	Sum = *Register + Operand;
-	if (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00)
-		FlagH = 1; else FlagH = 0;
+	FlagH = (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00);
 	*Register = (word)Sum;
-	if (Sum > 0xFFFF)
-		FlagNC = !(FlagC = 1);
-	else
-		FlagC = !(FlagNC = 1);
+	FlagC = (Sum > 0xFFFF);
+	FlagNC = !FlagC;
 	FlagN = 0;
 	TStates += 11;
 }
@@ -237,47 +222,46 @@ void AddWord(word* Register, word Operand) {
 
 // Logical And of two bytes, store result into *Register and set the Flag*s.
 //
-void And(byte* Register, byte Operand) {
-	*Register = *Register&Operand;
-	// Flags should be correct
+void And(byte * Register, byte Operand) {
+	*Register = *Register & Operand;
 	SetFlags(*Register);
-	FlagNC = !(FlagC = 0);
+	FlagC = 0;
+	FlagNC = !FlagC;
 	FlagN = 0;
-	//StoreFlags();
+	FlagH = 1;
 	TStates += 4;
 }
 
 
 // Logical exclusive Or of two bytes, store result into *Register and set the Flag*s.
 //
-void XOr(byte* Register, byte Operand) {
-	*Register = *Register^Operand;
-	// Flags should be correct, but aren't
+void XOr(byte * Register, byte Operand) {
+	*Register = *Register ^ Operand;
 	SetFlags(*Register);
-	FlagNC = !(FlagC = 0);
+	FlagC = 0;
+	FlagNC = !FlagC;
 	FlagN = 0;
 	FlagH = 0;
-	//StoreFlags();
 	TStates += 4;
 }
 
 
 // Logical Or of two bytes, store result into *Register and set the Flag*s.
 //
-void Or(byte* Register, byte Operand) {
+void Or(byte * Register, byte Operand) {
 	*Register = *Register | Operand;
-	// Flags should be correct
 	SetFlags(*Register);
-	FlagNC = !(FlagC = 0);
+	FlagC = 0;
+	FlagNC = !FlagC;
 	FlagN = 0;
-	//StoreFlags();
+	FlagH = 0;
 	TStates += 4;
 }
 
 
 // Subtract Operand to *Register; don't store the result anywhere, only set the Flag*s.
 //
-void Compare(byte* Register, byte Operand) {
+void Compare(byte * Register, byte Operand) {
 	byte Temp = *Register;
 	SubByte(&Temp, Operand);
 	FlagN = 1;
@@ -328,32 +312,23 @@ void Push(word Register) {
 	WriteMemory(SP.Word - 2, (Register & 0x00FF) >> 0);
 	WriteMemory(SP.Word - 1, (Register & 0xFF00) >> 8);
 	SP.Word -= 2;
-	TStates += 11;
+	TStates += 11;	// TODO: IX/IY use 15 states
 }
 
 
 // Pop a value from the stack and store it into *Register.
 //
-void Pop(word* Register) {
+void Pop(word * Register) {
 	*Register = ReadMemory(SP.Word++);
 	(*Register) |= ReadMemory(SP.Word++) << 8;
-	if (Register == &AF.Word) {
-		FlagNC = !(FlagC = (AF.Bytes.L >> 0) & 1);
-		FlagNZ = !(FlagZ = (AF.Bytes.L >> 6) & 1);
-		FlagPO = !(FlagPE = (AF.Bytes.L >> 2) & 1);
-		FlagP = !(FlagM = (AF.Bytes.L >> 7) & 1);
-		FlagN = (AF.Bytes.L >> 1) & 1;
-		FlagH = (AF.Bytes.L >> 4) & 1;
-		Flag3 = (AF.Bytes.L >> 3) & 1;
-		Flag5 = (AF.Bytes.L >> 5) & 1;
-	}
+	// Flags are unaffected by POP
 	TStates += 10;
 }
 
 
 // Swap two words.
 //
-void Swap(word* Reg1, word* Reg2) {
+void Swap(word * Reg1, word * Reg2) {
 	word Temp;
 	Temp = *Reg1;
 	*Reg1 = *Reg2;
@@ -425,9 +400,9 @@ logic* OperandF(byte Opcode) {
 	if (OPARG_F_NC(Opcode)) return &FlagNC;
 	if (OPARG_F_C(Opcode)) return &FlagC;
 	if (OPARG_F_PO(Opcode)) return &FlagPO;
-	if (OPARG_F_PE(Opcode)) return &FlagPE;
-	if (OPARG_F_P(Opcode)) return &FlagP;
-	if (OPARG_F_M(Opcode)) return &FlagM;
+	if (OPARG_F_PE(Opcode)) return &FlagP;
+	if (OPARG_F_PS(Opcode)) return &FlagPS;
+	if (OPARG_F_MS(Opcode)) return &FlagMS;
 	return NULL;
 }
 
@@ -447,7 +422,7 @@ logic* OperandSF(byte Opcode) {
 // Store a string in Name containing the human-readable name of the flag
 // which is a Flag* variable at address *Flag.
 //
-void NameFlag(logic* Flag, char* Name)
+void NameFlag(logic * Flag, char* Name)
 {
 	if (Flag == &FlagNZ)
 		strcpy(Name, "nz");
@@ -459,11 +434,11 @@ void NameFlag(logic* Flag, char* Name)
 		strcpy(Name, "c");
 	else if (Flag == &FlagPO)
 		strcpy(Name, "po");
-	else if (Flag == &FlagPE)
-		strcpy(Name, "pe");
 	else if (Flag == &FlagP)
+		strcpy(Name, "pe");
+	else if (Flag == &FlagPS)
 		strcpy(Name, "p");
-	else if (Flag == &FlagM)
+	else if (Flag == &FlagMS)
 		strcpy(Name, "m");
 	else
 		strcpy(Name, "?f");
@@ -473,7 +448,7 @@ void NameFlag(logic* Flag, char* Name)
 // Store a string in Name containing the human-readable name of the (byte)
 // register at address *Register.
 //
-void NameRegister(byte* Register, char* Name) {
+void NameRegister(byte * Register, char* Name) {
 	if (Register == &AF.Bytes.H)
 		strcpy(Name, "a");
 	else if (Register == &AF.Bytes.L)
@@ -581,10 +556,14 @@ void ResetCPU(void)
 	BC1.Word = 0;
 	DE1.Word = 0;
 	HL1.Word = 0;
+	/* Note: 
+	* This flag state setup is not documented Z80 behavior on reset.
+	* Leave in until flag operations are debugged. 	
+	*/
 	FlagNZ = !(FlagZ = 0);
 	FlagNC = !(FlagC = 0);
-	FlagPO = !(FlagPE = 0);
-	FlagP = !(FlagM = 0);
+	FlagPO = !(FlagP = 0);
+	FlagPS = !(FlagMS = 0);
 	Flag3 = 0;
 	Flag5 = 0;
 	FlagN = 0;
@@ -599,8 +578,8 @@ void InitSimulation() {
 	int i;
 
 	ResetCPU();
-	for (i = 0; i < 0x1000; i++) {
-		Memory[i] = 0x00; // rand();
+	for (i = 0; i < 0x10000; i++) {	// 64k RAM
+		Memory[i] = 0x00;
 	}
 	//ProtectRange(0x0000, 0x3fff, PROTECT_WRITE);
 	ProtectRange(0x0000, 0xffff, 0);
@@ -608,7 +587,7 @@ void InitSimulation() {
 }
 
 // Load the memory from the specified file
-void LoadROM(FILE* Handle) {
+void LoadROM(FILE * Handle) {
 	fread(Memory, 1, 0x10000, Handle);
 }
 
@@ -648,7 +627,7 @@ void MetaCall(byte Number) {
 }
 
 // Log the state of the simulation to a file
-void SnapshotState(FILE* Handle) {
+void SnapshotState(FILE * Handle) {
 	char Mnemonic[MAX_NAME];
 	word InstructionAddress;
 	InstructionAddress = PC.Word;
@@ -1395,7 +1374,7 @@ trap Step() {
 		WriteMemory(DE.Word, AF.Bytes.H);
 		TStates += 7;
 	}
-	else if (OP_ADD_S(IReg)) {
+	else if (OP_ADD_S(IReg)) {	// ADD and ADC
 		if (Indexing)
 			Index = ReadMemory(PC.Word++);
 		if (OPMOD_CARRYIN(IReg))
@@ -1436,10 +1415,8 @@ trap Step() {
 		Operand = OperandR(IReg);
 		Negative = SignBit(*Operand);
 		SetFlags(++(*Operand));
-		if (Negative ^ (SignBit(*Operand)))
-			FlagPO = !(FlagPE = TRUE);
-		else
-			FlagPO = !(FlagPE = FALSE);// Overflow
+		FlagP = Negative ^ (SignBit(*Operand));
+		FlagPO = !FlagP;
 		FlagN = 0;
 		TStates += 4;
 	}
@@ -1535,6 +1512,9 @@ trap Step() {
 	else if (OP_CCF(IReg)) {
 		FlagC = !FlagC;
 		FlagNC = !FlagNC;
+		FlagN = 0;
+		// FlagP = IFF1;
+		// FlagH undefined
 		// Undocumented flag behavior
 		Flag3 = AF.Bytes.H & 0x08;
 		Flag5 = AF.Bytes.H & 0x20;
@@ -1543,6 +1523,9 @@ trap Step() {
 	else if (OP_SCF(IReg)) {
 		FlagC = 1;
 		FlagNC = !FlagC;
+		FlagN = 0;
+		// FlagP = IFF1;
+		FlagH = 0;
 		// Undocumented flag behavior
 		Flag3 = AF.Bytes.H & 0x08;
 		Flag5 = AF.Bytes.H & 0x20;
@@ -1615,33 +1598,27 @@ trap Step() {
 			Pop(OperandP(IReg));
 	}
 	else if (OP_RLA(IReg)) {
-		logic Carry;
-		Carry = SignBit(AF.Bytes.H);
+		logic Carry = SignBit(AF.Bytes.H);
 		AF.Bytes.H = ((AF.Bytes.H) << 1) + (FlagC ? 1 : 0);
 		FlagNC = !(FlagC = Carry);
 		FlagN = FlagH = 0;
 		TStates += 4;
 	}
 	else if (OP_RLCA(IReg)) {
-		if (SignBit(AF.Bytes.H))
-			FlagNC = !(FlagC = TRUE);
-		else
-			FlagC = !(FlagNC = FALSE);
+		FlagC = SignBit(AF.Bytes.H);
+		FlagNC = !FlagC;
 		AF.Bytes.H = ((AF.Bytes.H) << 1) + (FlagC ? 1 : 0);
 		FlagN = FlagH = 0;
 	}
 	else if (OP_RRCA(IReg)) {
-		if (AF.Bytes.H & 1)
-			FlagNC = !(FlagC = TRUE);
-		else
-			FlagC = !(FlagNC = FALSE);
+		FlagC = (AF.Bytes.H & 1);
+		FlagNC = !FlagC;
 		AF.Bytes.H = ((AF.Bytes.H) >> 1) + (FlagC ? (1 << 7) : (0 << 7));
 		FlagN = FlagH = 0;
 		TStates += 4;
 	}
 	else if (OP_RRA(IReg)) {
-		logic Carry;
-		Carry = AF.Bytes.H & 1;
+		logic Carry = AF.Bytes.H & 1;
 		AF.Bytes.H = ((AF.Bytes.H) >> 1) + (FlagC ? (1 << 7) : (0 << 7));
 		FlagNC = !(FlagC = Carry);
 		FlagN = FlagH = 0;
@@ -1696,39 +1673,29 @@ trap Step() {
 		IReg = ReadMemory(PC.Word++);
 		PHLOverhead = 7;
 		if (OP_CB_RLC(IReg)) {
-			if (SignBit(*OperandS(IReg)))
-				FlagNC = !(FlagC = TRUE);
-			else
-				FlagNC = !(FlagC = FALSE);
+			FlagC = SignBit(*OperandS(IReg));
+			FlagNC = !FlagC;
 			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
 			SetFlags(*OperandS(IReg));
 			TStates += 8;
 		}
 		else if (OP_CB_RL(IReg)) {
-			logic Carry;
-			if (SignBit(*OperandS(IReg)))
-				Carry = TRUE;
-			else
-				Carry = FALSE;
+			logic Carry = SignBit(*OperandS(IReg));
 			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
 			FlagNC = !(FlagC = Carry);
 			SetFlags(*OperandS(IReg));
 			TStates += 8;
 		}
 		else if (OP_CB_RRC(IReg)) {
-			if ((*OperandS(IReg)) & 0x01)
-				FlagNC = !(FlagC = TRUE);
-			else
-				FlagNC = !(FlagC = FALSE);
+			FlagC = ((*OperandS(IReg)) & 0x01);
+			FlagNC = !FlagC;
 			*OperandS(IReg) = ((*OperandS(IReg)) >> 1) + (FlagC ? 0x80 : 0);
 			SetFlags(*OperandS(IReg));
 			TStates += 8;
 		}
 		else if (OP_CB_SLA(IReg)) {
-			if (SignBit(*OperandS(IReg)))
-				FlagNC = !(FlagC = TRUE);
-			else
-				FlagNC = !(FlagC = FALSE);
+			FlagC = SignBit(*OperandS(IReg));
+			FlagNC = !FlagC;
 			*OperandS(IReg) = (*OperandS(IReg)) << 1;
 			SetFlags(*OperandS(IReg));
 			FlagN = 0;
@@ -1817,7 +1784,9 @@ trap Step() {
 		Exception = TRAP_ILLEGAL;
 		UsefulInstruction = TRUE;
 	}
+
 	StoreFlags();
+
 	if (IndirectMemoryWrite) {
 		MemoryAddress = PointerReg->Word + (word)(sbyte)Index;
 		WriteMemory(MemoryAddress, MemoryData);
