@@ -91,7 +91,7 @@ void Stop(word Address) {
 		ReadFileLine(SourceSpec.File, SourceSpec.Line + 1, SourceLine);
 		fprintf(stdout, "           %s\n", SourceLine);
 	}
-	else 
+	else
 		fprintf(stdout, "(no C source line showable)\n");
 	fflush(NULL);	// for trace file
 }
@@ -200,8 +200,8 @@ int main(int argc, char* argv[]) {
 				ShowTrace(InstructionAddress, Mnemonic);
 			}
 		}
-		if (StateLog) {
-			SnapshotState(StateLog);
+		if (StateLog && GetFrame() == 0) {
+			SnapshotState(StateLog);	// capture frame 0
 		}
 		switch (Step()) {
 		case TRAP_NONE:
@@ -223,6 +223,9 @@ int main(int argc, char* argv[]) {
 			fprintf(stdout, "\nTRAP: Unknown exception\n");
 			Stop(InstructionAddress);
 			break;
+		}
+		if (StateLog) {
+			SnapshotState(StateLog);
 		}
 		if (GetFrame() % 1000 == 0) RaiseIRQ();
 	}
