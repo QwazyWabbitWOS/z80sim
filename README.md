@@ -13,4 +13,4 @@ The help display is a bit more explanatory.
 
 The emulator is still fairly incomplete. Some primary opcodes are not implemented and a lot of the multi-byte opcodes are not implemented. 
 
-Progess is being made on the disassembler. The only undecoded instructions are the DDCB and FDCB groups.
+The disassembler now decodes all instructions.
