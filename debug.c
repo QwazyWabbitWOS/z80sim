@@ -137,6 +137,7 @@ void ExecuteInfo(const char* Parameters) {
 	while ((Token = ExtractToken(DebugTokens, &OtherSymbols, Lexeme, TRUE)) == 0) {
 		if (strlen(Lexeme) == 0) {
 			fprintf(stdout, "Info on what?\n");
+			fprintf(stdout, "watchpoints, warranty are supported\n");
 			return;
 		}
 	}
@@ -345,21 +346,21 @@ logic Debugger() {
 		case CMD_QUIT:
 			exit(0);
 		case CMD_HELP:
-			fprintf(stdout, "\t%s\t%s\n", LEX_QUIT, "Quit the simulator");
+			fprintf(stdout, "\t%s\t%s\n", LEX_DISABLE, "Disable watchpoint");
+			fprintf(stdout, "\t%s\t%s\n", LEX_DISASM, "Disassemble ("LEX_DISASM" addr <addr>)");
+			fprintf(stdout, "\t%s\t%s\n", LEX_ENABLE, "Enable a disabled watchpoint");
+			fprintf(stdout, "\t%s\t%s\n", LEX_EVAL, "Evaluate expression [<expression>]");
+			fprintf(stdout, "\t%s\t%s\n", LEX_EXAMINE, "Examine memory ("LEX_EXAMINE" addr <addr>)");
 			fprintf(stdout, "\t%s\t%s\n", LEX_INFO, "Get info on...");
+			fprintf(stdout, "\t%s\t%s\n", LEX_IRQ, "*Not implemented*");
+			fprintf(stdout, "\t%s\t%s\n", LEX_NAME, "Give symbolic name of an address");
+			fprintf(stdout, "\t%s\t%s\n", LEX_QUIT, "Quit the simulator");
+			fprintf(stdout, "\t%s\t%s\n", LEX_RESET, "Reset the CPU");
 			fprintf(stdout, "\t%s\t%s\n", LEX_RUN, "Run the simulation at speed");
+			fprintf(stdout, "\t%s\t%s\n", LEX_STACK, "Display n words at stack pointer ("LEX_STACK" [n])");
 			fprintf(stdout, "\t%s\t%s\n", LEX_STEP, "Single-step the next opcode");
 			fprintf(stdout, "\t%s\t%s\n", LEX_STEPI, "Single-step the next C line");
 			fprintf(stdout, "\t%s\t%s\n", LEX_WATCH, "Set watchpoint");
-			fprintf(stdout, "\t%s\t%s\n", LEX_EVAL, "Evaluate expression [<expression>]");
-			fprintf(stdout, "\t%s\t%s\n", LEX_DISASM, "Disassemble ("LEX_DISASM" addr <addr>)");
-			fprintf(stdout, "\t%s\t%s\n", LEX_EXAMINE, "Examine memory ("LEX_EXAMINE" addr <addr>)");
-			fprintf(stdout, "\t%s\t%s\n", LEX_STACK, "Display stack pointer ("LEX_STACK" [<expression>])");
-			fprintf(stdout, "\t%s\t%s\n", LEX_IRQ, "");
-			fprintf(stdout, "\t%s\t%s\n", LEX_NAME, "");
-			fprintf(stdout, "\t%s\t%s\n", LEX_ENABLE, "");
-			fprintf(stdout, "\t%s\t%s\n", LEX_DISABLE, "");
-			fprintf(stdout, "\t%s\t%s\n", LEX_RESET, "Reset the CPU");
 			fprintf(stdout, "\tinfo %s\n", LEX_INFO_WATCHPOINTS);
 			fprintf(stdout, "\tinfo %s\n", LEX_INFO_WARRANTY);
 			break;
