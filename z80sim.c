@@ -106,6 +106,7 @@ int main(int argc, char* argv[]) {
 	char Mnemonic[MAX_NAME];
 
 	int i = 0;
+	ZilogMnemonics = FALSE;
 	ProgramFile = SymbolsFile = DebugFile = StateLog = NULL;
 	SingleStepping = TRUE;
 	TraceExecution = FALSE;
@@ -134,6 +135,9 @@ int main(int argc, char* argv[]) {
 			DebugFile = fopen(argv[i], "r");
 			if (DebugFile == NULL)
 				fprintf(stdout, "Could not open debug file '%s'", argv[i]);
+		}
+		else if (!strcmp(argv[i], "--zilog") || !strcmp(argv[i], "-z")) {
+			ZilogMnemonics = TRUE;
 		}
 		else if (!strcmp(argv[i], "--statelog") ||
 			!strcmp(argv[i], "-l")) {
