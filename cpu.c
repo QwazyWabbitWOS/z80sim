@@ -883,7 +883,8 @@ void Disassemble(word * Address, char* Mnemonic) {
 		sprintf(Mnemonic, "jp %s, %s", NameF, Symbol);
 	}
 	else if (OP_JP_PHL(Opcode)) {
-		sprintf(Mnemonic, "jp (HL)");
+		NameRegisterPair(&PointerReg->Word, NameI);
+		sprintf(Mnemonic, "jp (%s)", NameI);
 	}
 	else if (OP_JR_B(Opcode)) {
 		sprintf(Mnemonic, "jr 0x%02x", Memory[(*Address)++]);
