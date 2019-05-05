@@ -1760,43 +1760,45 @@ trap Step() {
 		UsefulInstruction = TRUE;
 	}
 	else if (OP_CB(IReg)) {
-		IReg = ReadMemory(PC.Word++);
-		PHLOverhead = 7;
-		if (OP_CB_RLC(IReg)) {
-			FlagC = SignBit(*OperandS(IReg));
-			FlagNC = !FlagC;
-			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
-			SetFlags(*OperandS(IReg));
-			TStates += 8;
-		}
-		else if (OP_CB_RL(IReg)) {
-			logic Carry = SignBit(*OperandS(IReg));
-			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
-			FlagNC = !(FlagC = Carry);
-			SetFlags(*OperandS(IReg));
-			TStates += 8;
-		}
-		else if (OP_CB_RRC(IReg)) {
-			FlagC = ((*OperandS(IReg)) & 0x01);
-			FlagNC = !FlagC;
-			*OperandS(IReg) = ((*OperandS(IReg)) >> 1) + (FlagC ? 0x80 : 0);
-			SetFlags(*OperandS(IReg));
-			TStates += 8;
-		}
-		else if (OP_CB_SLA(IReg)) {
-			FlagC = SignBit(*OperandS(IReg));
-			FlagNC = !FlagC;
-			*OperandS(IReg) = (*OperandS(IReg)) << 1;
-			SetFlags(*OperandS(IReg));
-			FlagN = 0;
-			FlagH = 0;
-			TStates += 8;
-		}
-		else if (OP_CB_BIT_N_S(IReg)) {
-			FlagZ = !(FlagNZ = (*OperandS(IReg)) & (1 << OPPARM_N(IReg)));
-			FlagN = 0;
-			FlagH = 1;
-			TStates += 8;
+		if (!Indexing) {
+			IReg = ReadMemory(PC.Word++);
+			PHLOverhead = 7;
+			if (OP_CB_RLC(IReg)) {
+				FlagC = SignBit(*OperandS(IReg));
+				FlagNC = !FlagC;
+				*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
+				SetFlags(*OperandS(IReg));
+				TStates += 8;
+			}
+			else if (OP_CB_RL(IReg)) {
+				logic Carry = SignBit(*OperandS(IReg));
+				*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
+				FlagNC = !(FlagC = Carry);
+				SetFlags(*OperandS(IReg));
+				TStates += 8;
+			}
+			else if (OP_CB_RRC(IReg)) {
+				FlagC = ((*OperandS(IReg)) & 0x01);
+				FlagNC = !FlagC;
+				*OperandS(IReg) = ((*OperandS(IReg)) >> 1) + (FlagC ? 0x80 : 0);
+				SetFlags(*OperandS(IReg));
+				TStates += 8;
+			}
+			else if (OP_CB_SLA(IReg)) {
+				FlagC = SignBit(*OperandS(IReg));
+				FlagNC = !FlagC;
+				*OperandS(IReg) = (*OperandS(IReg)) << 1;
+				SetFlags(*OperandS(IReg));
+				FlagN = 0;
+				FlagH = 0;
+				TStates += 8;
+			}
+			else if (OP_CB_BIT_N_S(IReg)) {
+				FlagZ = !(FlagNZ = (*OperandS(IReg)) & (1 << OPPARM_N(IReg)));
+				FlagN = 0;
+				FlagH = 1;
+				TStates += 8;
+			}
 		}
 		else {
 			fprintf(stdout, "ERROR: Unimplemented CB opcode %02x at %04x\n", IReg, PC.Word - 1);
