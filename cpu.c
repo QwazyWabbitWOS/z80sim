@@ -1822,6 +1822,10 @@ trap Step() {
 			WriteMemory(Addr, *OperandP(IReg) >> 8);
 			TStates += 20;
 		}
+		else if (OP_ED_ADC_HL_P(IReg)) {	/* ADC HL, RP */
+			AddWord(&PointerReg->Word, *OperandP(IReg));
+			TStates += 4; // AddWord adds 11, for total 15
+		}
 		else if (OP_ED_RRD(IReg)) {
 			int     x, a;
 			x = ReadMemory(HL.Word);
