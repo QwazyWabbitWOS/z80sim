@@ -219,6 +219,19 @@ void AddWord(word * Register, word Operand) {
 	TStates += 11;
 }
 
+// As per AddWord(), but negate Operand before summing.
+//
+void SubWord(word * Register, word Operand) {
+	long Sum;
+	Operand = -Operand;
+	Sum = *Register + Operand;
+	FlagH = (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00);
+	*Register = (word)Sum;
+	FlagC = (Sum < 0xFFFF);
+	FlagNC = !FlagC;
+	FlagN = 0;
+	TStates += 11;
+}
 
 // Logical And of two bytes, store result into *Register and set the Flag*s.
 //
@@ -1826,7 +1839,19 @@ trap Step() {
 		}
 		else if (OP_ED_ADC_HL_P(IReg)) {	/* ADC HL, RP */
 			AddWord(&PointerReg->Word, *OperandP(IReg));
-			TStates += 4; // AddWord adds 11, for total 15
+			FlagP = FlagC; // P/V = overflow
+			FlagPO = !FlagP;
+			FlagZ = (PointerReg->Word == 0);
+			FlagNZ = !FlagZ;
+			TStates += 4;
+		}
+		else if (OP_ED_SBC_HL_P(IReg)) {	/* SBC HL, RP */
+			SubWord(&PointerReg->Word, *OperandP(IReg));
+			FlagP = FlagC; // P/V = overflow
+			FlagPO = !FlagP;
+			FlagZ = (PointerReg->Word == 0);
+			FlagNZ = !FlagZ;
+			TStates += 4;
 		}
 		else if (OP_ED_RRD(IReg)) {
 			int     x, a;
