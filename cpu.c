@@ -40,6 +40,7 @@
 #define METACALL_READPROTECT	0x09
 #define METACALL_RWPROTECT	0x0a
 #define METACALL_UNPROTECT	0x0b
+#define METACALL_PUTSTRING	0x0c
 
 #define PROTECT_WRITE		1<<0
 #define PROTECT_READ		1<<1
@@ -543,6 +544,7 @@ void WriteMemory(word Address, byte Value) {
 	}
 }
 
+/* Stubbed. Always returns 0 */
 inline byte ReadIO(byte Port) {
 	return 0;
 }
@@ -603,6 +605,8 @@ void LoadROM(FILE * Handle) {
 }
 
 void MetaCall(byte Number) {
+	byte s;
+	word address;
 	switch (Number) {
 	case METACALL_ENTER:
 		// to be implemented
@@ -613,6 +617,12 @@ void MetaCall(byte Number) {
 	case METACALL_PUTCHARACTER:
 		fprintf(stderr, "%c", HL.Bytes.L);
 		fflush(stderr);
+		break;
+	case METACALL_PUTSTRING:
+		address = HL.Word;
+		while (s = ReadMemory((address)++))
+			fprintf(stdout, "%c", (int) s);
+		fflush(stdout);
 		break;
 	case METACALL_PUTWORD:
 		fprintf(stderr, "%04x", HL.Word);
