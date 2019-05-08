@@ -182,7 +182,6 @@ void AddByte(byte * Register, byte Operand) {
 	FlagP = (SignBit(Op1) == SignBit(Op2) && SignBit((byte)Sum) != SignBit(Op1));
 	FlagPO = !FlagP;
 	FlagN = 0;
-	TStates += 4;
 }
 
 
@@ -202,7 +201,6 @@ void SubByte(byte * Register, byte Operand) {
 	FlagP = (SignBit(Op1) == SignBit(Op2) && SignBit((byte)Sum) != SignBit(Op1));
 	FlagPO = !FlagP;
 	FlagN = 0;
-	TStates += 4;
 }
 
 
@@ -217,7 +215,6 @@ void AddWord(word * Register, word Operand) {
 	FlagC = (Sum > 0xFFFF);
 	FlagNC = !FlagC;
 	FlagN = 0;
-	TStates += 11;
 }
 
 // As per AddWord(), but negate Operand before summing.
@@ -231,7 +228,6 @@ void SubWord(word * Register, word Operand) {
 	FlagC = (Sum < 0xFFFF);
 	FlagNC = !FlagC;
 	FlagN = 0;
-	TStates += 11;
 }
 
 // Logical And of two bytes, store result into *Register and set the Flag*s.
@@ -243,7 +239,6 @@ void And(byte * Register, byte Operand) {
 	FlagNC = !FlagC;
 	FlagN = 0;
 	FlagH = 1;
-	TStates += 4;
 }
 
 
@@ -256,7 +251,6 @@ void XOr(byte * Register, byte Operand) {
 	FlagNC = !FlagC;
 	FlagN = 0;
 	FlagH = 0;
-	TStates += 4;
 }
 
 
@@ -269,7 +263,6 @@ void Or(byte * Register, byte Operand) {
 	FlagNC = !FlagC;
 	FlagN = 0;
 	FlagH = 0;
-	TStates += 4;
 }
 
 
@@ -279,7 +272,6 @@ void Compare(byte * Register, byte Operand) {
 	byte Temp = *Register;
 	SubByte(&Temp, Operand);
 	FlagN = 1;
-	TStates += 4;
 }
 
 
@@ -297,7 +289,6 @@ word GetWordOperand() {
 //
 void JumpAbsolute(word NewAddress) {
 	PC.Word = NewAddress;
-	TStates += 10;
 	UsefulInstruction = TRUE;
 }
 
@@ -306,7 +297,6 @@ void JumpAbsolute(word NewAddress) {
 //
 void JumpRelative(byte Index) {
 	PC.Word += (word)(sbyte)Index;
-	TStates += 12;
 	UsefulInstruction = TRUE;
 }
 
@@ -316,7 +306,6 @@ void JumpRelative(byte Index) {
 void Call(word ProcAddress) {
 	Push(PC.Word);
 	JumpAbsolute(ProcAddress);
-	TStates -= 4;
 }
 
 
@@ -326,7 +315,6 @@ void Push(word Register) {
 	WriteMemory(SP.Word - 2, (Register & 0x00FF) >> 0);
 	WriteMemory(SP.Word - 1, (Register & 0xFF00) >> 8);
 	SP.Word -= 2;
-	TStates += 11;	// TODO: IX/IY use 15 states
 }
 
 
@@ -335,8 +323,6 @@ void Push(word Register) {
 void Pop(word * Register) {
 	*Register = ReadMemory(SP.Word++);
 	(*Register) |= ReadMemory(SP.Word++) << 8;
-	// Flags are unaffected by POP
-	TStates += 10;
 }
 
 
@@ -1421,22 +1407,29 @@ trap Step() {
 		PointerReg = &HL;
 		Indexing = FALSE;
 	}
+
 	Index = 0x00;
-	PHLOverhead = 3;
+	/* Initialize the (HL) overhead to 0
+	 * in preparation for removal from OperandR and OperandS */
+	PHLOverhead = 0;
+
 	if (OP_HLT(IReg)) {
 		PC.Word--;
-		TStates += 4;
 		UsefulInstruction = TRUE;
+		TStates += 4;
 	}
 	else if (OP_LD_R_S(IReg)) {
-		if (Indexing)
+		if (Indexing) {
 			Index = ReadMemory(PC.Word++);
+			//TStates += 19; 
+		}
 		*OperandR(IReg) = *OperandS(IReg);
 		TStates += 4;
 	}
 	else if (OP_LD_R_B(IReg)) {
-		if (Indexing)
+		if (Indexing) {
 			Index = ReadMemory(PC.Word++);
+		}
 		*OperandR(IReg) = ReadMemory(PC.Word++);
 		TStates += 7;
 	}
@@ -1487,19 +1480,21 @@ trap Step() {
 		TStates += 7;
 	}
 	else if (OP_ADD_S(IReg)) {	// ADD and ADC
-		if (Indexing)
+		if (Indexing) {
 			Index = ReadMemory(PC.Word++);
+		}
 		if (OPMOD_CARRYIN(IReg))
 			AddByte(&AF.Bytes.H, *OperandS(IReg) + (FlagC ? 1 : 0));
 		else
 			AddByte(&AF.Bytes.H, *OperandS(IReg));
+		TStates += 4;
 	}
 	else if (OP_ADD_B(IReg)) {
 		if (OPMOD_CARRYIN(IReg))
 			AddByte(&AF.Bytes.H, ReadMemory(PC.Word++) + (FlagC ? 1 : 0));
 		else
 			AddByte(&AF.Bytes.H, ReadMemory(PC.Word++));
-		TStates += 3;
+		TStates += 7;
 	}
 	else if (OP_SUB_S(IReg)) {
 		if (Indexing)
@@ -1509,6 +1504,10 @@ trap Step() {
 		else
 			SubByte(&AF.Bytes.H, *OperandS(IReg));
 		FlagN = 1;
+		if (Indexing)
+			TStates += 19;
+		else
+			TStates += 4;
 	}
 	else if (OP_SUB_B(IReg)) {
 		if (OPMOD_CARRYIN(IReg))
@@ -1553,44 +1552,51 @@ trap Step() {
 		if (Indexing)
 			Index = ReadMemory(PC.Word++);
 		And(&AF.Bytes.H, *OperandS(IReg));
+		TStates += 7;
 	}
 	else if (OP_AND_B(IReg)) {
 		And(&AF.Bytes.H, ReadMemory(PC.Word++));
+		TStates += 4;
 	}
 	else if (OP_XOR_S(IReg)) {
 		if (Indexing)
 			Index = ReadMemory(PC.Word++);
 		XOr(&AF.Bytes.H, *OperandS(IReg));
+		TStates += 4;
 	}
 	else if (OP_XOR_B(IReg)) {
 		XOr(&AF.Bytes.H, ReadMemory(PC.Word++));
+		TStates += 7;
 	}
 	else if (OP_OR_S(IReg)) {
 		if (Indexing)
 			Index = ReadMemory(PC.Word++);
 		Or(&AF.Bytes.H, *OperandS(IReg));
+		TStates += 4;
 	}
 	else if (OP_OR_B(IReg)) {
 		Or(&AF.Bytes.H, ReadMemory(PC.Word++));
+		TStates += 7;
 	}
 	else if (OP_CP_S(IReg)) {
 		if (Indexing)
 			Index = ReadMemory(PC.Word++);
 		Compare(&AF.Bytes.H, *OperandS(IReg));
+		TStates += 4;
 	}
 	else if (OP_CP_B(IReg)) {
 		Compare(&AF.Bytes.H, ReadMemory(PC.Word++));
-		TStates += 3;
+		TStates += 7;
 	}
 	else if (OP_JP_W(IReg)) {
 		JumpAbsolute(GetWordOperand());
+		TStates += 10;
 	}
 	else if (OP_JP_F_W(IReg)) {
 		Word = GetWordOperand();
 		if (*OperandF(IReg))
 			JumpAbsolute(Word);
-		else
-			TStates += 10;
+		TStates += 10;
 		UsefulInstruction = TRUE;
 	}
 	else if (OP_JP_PHL(IReg)) {
@@ -1599,11 +1605,14 @@ trap Step() {
 	}
 	else if (OP_JR_B(IReg)) {
 		JumpRelative(ReadMemory(PC.Word++));
+		TStates += 12;
 	}
 	else if (OP_JR_SF_B(IReg)) {
 		Byte = ReadMemory(PC.Word++);
-		if (*OperandF(IReg))
+		if (*OperandF(IReg)) {
 			JumpRelative(Byte);
+			TStates += 12;
+		}
 		else
 			TStates += 7;
 		UsefulInstruction = TRUE;
@@ -1613,7 +1622,7 @@ trap Step() {
 		BC.Bytes.H--;
 		if (BC.Bytes.H != 0) {
 			JumpRelative(Byte);
-			TStates += 1;
+			TStates += 13;
 		}
 		else
 			TStates += 8;
@@ -1624,12 +1633,11 @@ trap Step() {
 		TStates += 4;
 	}
 	else if (OP_CCF(IReg)) {
+		FlagH = FlagC;
 		FlagC = !FlagC;
 		FlagNC = !FlagNC;
 		FlagN = 0;
-		// FlagP = IFF1;
-		// FlagH undefined
-		// Undocumented flag behavior
+		// Undocumented:
 		Flag3 = AF.Bytes.H & 0x08;
 		Flag5 = AF.Bytes.H & 0x20;
 		TStates += 4;
@@ -1638,9 +1646,8 @@ trap Step() {
 		FlagC = 1;
 		FlagNC = !FlagC;
 		FlagN = 0;
-		// FlagP = IFF1;
 		FlagH = 0;
-		// Undocumented flag behavior
+		// Undocumented:
 		Flag3 = AF.Bytes.H & 0x08;
 		Flag5 = AF.Bytes.H & 0x20;
 		TStates += 4;
@@ -1655,22 +1662,26 @@ trap Step() {
 	}
 	else if (OP_CALL_W(IReg)) {
 		Call(GetWordOperand());
+		TStates += 17;
 	}
 	else if (OP_CALL_F_W(IReg)) {
 		Word = GetWordOperand();
-		if (*OperandF(IReg))
+		if (*OperandF(IReg)) {
 			Call(Word);
+			TStates += 17;
+		}
 		else
 			TStates += 10;
 		UsefulInstruction = TRUE;
 	}
 	else if (OP_RET(IReg)) {
 		Pop(&(PC.Word));
+		TStates += 10;
 	}
 	else if (OP_RET_F(IReg)) {
 		if (*OperandF(IReg)) {
 			Pop(&PC.Word);
-			TStates += 1;
+			TStates += 11;
 		}
 		else TStates += 5;
 		UsefulInstruction = TRUE;
@@ -1690,7 +1701,7 @@ trap Step() {
 		if (Indexing)
 			TStates += 23;
 		else
-			TStates += 4;
+			TStates += 19;
 	}
 	else if (OP_EXAFAF1(IReg)) {
 		Swap(&AF.Word, &AF1.Word);
@@ -1704,12 +1715,20 @@ trap Step() {
 	}
 	else if (OP_PUSH_P(IReg)) {
 		Push((OperandP(IReg) == &SP.Word) ? (AF.Word) : (*OperandP(IReg)));
+		if (Indexing)
+			TStates += 15;
+		else
+			TStates += 11;
 	}
 	else if (OP_POP_P(IReg)) {
 		if (OperandP(IReg) == &SP.Word)
 			Pop(&AF.Word);
 		else
 			Pop(OperandP(IReg));
+		if (Indexing)
+			TStates += 14;
+		else
+			TStates += 10;
 	}
 	else if (OP_RLA(IReg)) {
 		logic Carry = SignBit(AF.Bytes.H);
@@ -1723,6 +1742,7 @@ trap Step() {
 		FlagNC = !FlagC;
 		AF.Bytes.H = ((AF.Bytes.H) << 1) + (FlagC ? 1 : 0);
 		FlagN = FlagH = 0;
+		TStates += 4;
 	}
 	else if (OP_RRCA(IReg)) {
 		FlagC = (AF.Bytes.H & 1);
@@ -1749,35 +1769,43 @@ trap Step() {
 	else if (OP_RST00(IReg)) {
 		Push(PC.Word);
 		PC.Word = 0x0000;
+		TStates += 11;
 	}
 	else if (OP_RST08(IReg)) {
 		MetaCall(AF.Bytes.H);
 		// Push(PC.Word);
 		// PC.Word=0x0008;
+		TStates += 11;
 	}
 	else if (OP_RST10(IReg)) {
 		Push(PC.Word);
 		PC.Word = 0x0010;
+		TStates += 11;
 	}
 	else if (OP_RST18(IReg)) {
 		Push(PC.Word);
 		PC.Word = 0x0018;
+		TStates += 11;
 	}
 	else if (OP_RST20(IReg)) {
 		Push(PC.Word);
 		PC.Word = 0x0020;
+		TStates += 11;
 	}
 	else if (OP_RST28(IReg)) {
 		Push(PC.Word);
 		PC.Word = 0x0028;
+		TStates += 11;
 	}
 	else if (OP_RST30(IReg)) {
 		Push(PC.Word);
 		PC.Word = 0x0030;
+		TStates += 11;
 	}
 	else if (OP_RST38(IReg)) {
 		Push(PC.Word);
 		PC.Word = 0x0038;
+		TStates += 11;
 	}
 	else if (OP_NOP(IReg)) {
 		TStates += 4;
@@ -1786,7 +1814,7 @@ trap Step() {
 	else if (OP_CB(IReg)) {
 		if (!Indexing) {
 			IReg = ReadMemory(PC.Word++);
-			PHLOverhead = 7;
+			PHLOverhead = 7; // (HL) adds 7 in OperandS function.
 			if (OP_CB_RLC(IReg)) {
 				FlagC = SignBit(*OperandS(IReg));
 				FlagNC = !FlagC;
@@ -1825,7 +1853,7 @@ trap Step() {
 			}
 		}
 		else {
-			fprintf(stdout, "ERROR: Unimplemented CB opcode %02x at %04x\n", IReg, PC.Word - 1);
+			fprintf(stdout, "ERROR: Unimplemented CB opcode %02x at PC = %04x\n", IReg, PC.Word - 1);
 			Exception = TRAP_ILLEGAL;
 			UsefulInstruction = TRUE;
 		}
@@ -1849,20 +1877,24 @@ trap Step() {
 			TStates += 20;
 		}
 		else if (OP_ED_ADC_HL_P(IReg)) {	/* ADC HL, RP */
-			AddWord(&PointerReg->Word, *OperandP(IReg));
+			AddWord(&PointerReg->Word, *OperandP(IReg) + (FlagC ? 1 : 0));
 			FlagP = FlagC; // P/V = overflow
 			FlagPO = !FlagP;
 			FlagZ = (PointerReg->Word == 0);
 			FlagNZ = !FlagZ;
-			TStates += 4;
+			FlagMS = (PointerReg->Bytes.H & 0x80);
+			FlagPS = !FlagMS;
+			TStates += 15;
 		}
 		else if (OP_ED_SBC_HL_P(IReg)) {	/* SBC HL, RP */
-			SubWord(&PointerReg->Word, *OperandP(IReg));
+			SubWord(&PointerReg->Word, *OperandP(IReg) - (FlagC ? 1 : 0));
 			FlagP = FlagC; // P/V = overflow
 			FlagPO = !FlagP;
 			FlagZ = (PointerReg->Word == 0);
 			FlagNZ = !FlagZ;
-			TStates += 4;
+			FlagMS = (PointerReg->Bytes.H & 0x80);
+			FlagPS = !FlagMS;
+			TStates += 15;
 		}
 		else if (OP_ED_RRD(IReg)) {
 			int     x, a;
@@ -1906,13 +1938,13 @@ trap Step() {
 			TStates += 12;
 		}
 		else {
-			fprintf(stdout, "ERROR: Unimplemented ED opcode %02x at %04x\n", IReg, PC.Word - 1);
+			fprintf(stdout, "ERROR: Unimplemented ED opcode %02x at PC = %04x\n", IReg, PC.Word - 1);
 			Exception = TRAP_ILLEGAL;
 			UsefulInstruction = TRUE;
 		}
 	}
 	else {
-		fprintf(stdout, "ERROR: Unimplemented primary opcode %02x at %04x\n", IReg, PC.Word - 1);
+		fprintf(stdout, "ERROR: Unimplemented primary opcode %02x at PC = %04x\n", IReg, PC.Word - 1);
 		Exception = TRAP_ILLEGAL;
 		UsefulInstruction = TRUE;
 	}
