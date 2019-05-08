@@ -621,8 +621,9 @@ void MetaCall(byte Number) {
 	case METACALL_PUTSTRING:
 		address = HL.Word;
 		while (s = ReadMemory((address)++))
-			fprintf(stdout, "%c", (int) s);
-		fflush(stdout);
+			fprintf(stderr, "%c", (int)s);
+		fprintf(stderr, "\n");
+		fflush(stderr);
 		break;
 	case METACALL_PUTWORD:
 		fprintf(stderr, "%04x", HL.Word);
