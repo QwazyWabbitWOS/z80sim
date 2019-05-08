@@ -98,11 +98,6 @@ byte Index;
 
 trap Exception;
 
-//#warning FIXME: DOES NOT GIVE THE RIGHT T-STATES, SHOULD BE MOVED OUT OF OperandR AND THE REST
-
-int PHLOverhead;
-
-
 // Protect a zone of the main memory as specified by Flags
 //
 void ProtectRange(word Start, word End, short Flags) {
@@ -348,7 +343,6 @@ byte* OperandR(byte Opcode) {
 	if (OPARG_R_H(Opcode)) return &HL.Bytes.H;
 	if (OPARG_R_L(Opcode)) return &HL.Bytes.L;
 	if (OPARG_R_PHL(Opcode)) {
-		TStates += PHLOverhead;
 		IndirectMemoryWrite = TRUE;
 		MemoryData = ReadMemory(PointerReg->Word + (word)(sbyte)Index);
 		return &MemoryData;
@@ -370,7 +364,6 @@ byte* OperandS(byte Opcode) {
 	if (OPARG_S_H(Opcode)) return &HL.Bytes.H;
 	if (OPARG_S_L(Opcode)) return &HL.Bytes.L;
 	if (OPARG_S_PHL(Opcode)) {
-		TStates += PHLOverhead;
 		MemoryData = ReadMemory(PointerReg->Word + (word)(sbyte)Index);
 		return &MemoryData;
 	}
@@ -1390,7 +1383,8 @@ trap Step() {
 	OldIFF2 = IFF2;
 	UsefulInstruction = FALSE;
 	IndirectMemoryWrite = MemoryWrite = FALSE;
-	if (EnableInterrupts) IFF1 = TRUE;
+	if (EnableInterrupts)
+		IFF1 = TRUE;
 	if (OP_IXPREFIX(IReg)) {
 		IReg = ReadMemory(PC.Word++);
 		PointerReg = &IX;
@@ -1409,9 +1403,6 @@ trap Step() {
 	}
 
 	Index = 0x00;
-	/* Initialize the (HL) overhead to 0
-	 * in preparation for removal from OperandR and OperandS */
-	PHLOverhead = 0;
 
 	if (OP_HLT(IReg)) {
 		PC.Word--;
@@ -1814,7 +1805,7 @@ trap Step() {
 	else if (OP_CB(IReg)) {
 		if (!Indexing) {
 			IReg = ReadMemory(PC.Word++);
-			PHLOverhead = 7; // (HL) adds 7 in OperandS function.
+			TStates += 7;
 			if (OP_CB_RLC(IReg)) {
 				FlagC = SignBit(*OperandS(IReg));
 				FlagNC = !FlagC;
