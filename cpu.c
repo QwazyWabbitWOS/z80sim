@@ -1411,11 +1411,13 @@ trap Step() {
 		PC.Word--;
 		UsefulInstruction = TRUE;
 		TStates += 4;
+		if (TrapOnHalt)
+			Exception = TRAP_HALT;
 	}
 	else if (OP_LD_R_S(IReg)) {
 		if (Indexing) {
 			Index = ReadMemory(PC.Word++);
-			//TStates += 19; 
+			TStates += 5;
 		}
 		*OperandR(IReg) = *OperandS(IReg);
 		if (IndirectMemoryAccess == TRUE)
@@ -1426,6 +1428,7 @@ trap Step() {
 	else if (OP_LD_R_B(IReg)) {
 		if (Indexing) {
 			Index = ReadMemory(PC.Word++);
+			TStates += 5;
 		}
 		*OperandR(IReg) = ReadMemory(PC.Word++);
 		if (IndirectMemoryAccess == TRUE)

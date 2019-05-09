@@ -139,6 +139,9 @@ int main(int argc, char* argv[]) {
 		else if (!strcmp(argv[i], "--zilog") || !strcmp(argv[i], "-z")) {
 			ZilogMnemonics = TRUE;
 		}
+		else if (!strcmp(argv[i], "--halt")) {
+			TrapOnHalt = TRUE;
+		}
 		else if (!strcmp(argv[i], "--statelog") ||
 			!strcmp(argv[i], "-l")) {
 			i++;
@@ -213,6 +216,10 @@ int main(int argc, char* argv[]) {
 			break;
 		case TRAP_METACALL:
 			fprintf(stdout, "\nTRAP: Metacall not implemented (illegal instruction)\n");
+			Stop(InstructionAddress);
+			break;
+		case TRAP_HALT:
+			fprintf(stdout, "\nTRAP: HALT instruction executed\n");
 			Stop(InstructionAddress);
 			break;
 		case TRAP_ILLEGAL:

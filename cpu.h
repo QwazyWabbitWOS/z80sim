@@ -41,7 +41,8 @@ typedef enum {
 	TRAP_ILLEGAL,
 	TRAP_MEMORY,
 	TRAP_NOEFFECT,
-	TRAP_METACALL
+	TRAP_METACALL,
+	TRAP_HALT
 } trap;
 
 void ResetCPU(void);	// Power-on reset Z80 state.

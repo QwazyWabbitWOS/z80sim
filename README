@@ -28,6 +28,8 @@ by default.
                        be able to refer to C source code lines.
   --zilog (-z)         Outputs Zilog mnemonic output for indexed
                        instructions instead of default.
+  --halt               Emulator stops executing when HALT instruction
+                       is encountered.
 
 
 INTRODUCTION
