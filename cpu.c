@@ -89,7 +89,7 @@ unsigned long InstructionsExecuted;
 logic UsefulInstruction;
 
 logic Indexing;	// TRUE when we decoded IX or IY opcode prefixes
-logic IndirectMemoryWrite;
+logic IndirectMemoryAccess; // TRUE when doing any indirect-mode instructions 
 logic MemoryWrite;
 byte MemoryData;
 word MemoryAddress;
@@ -343,7 +343,7 @@ byte* OperandR(byte Opcode) {
 	if (OPARG_R_H(Opcode)) return &HL.Bytes.H;
 	if (OPARG_R_L(Opcode)) return &HL.Bytes.L;
 	if (OPARG_R_PHL(Opcode)) {
-		IndirectMemoryWrite = TRUE;
+		IndirectMemoryAccess = TRUE;
 		MemoryData = ReadMemory(PointerReg->Word + (word)(sbyte)Index);
 		return &MemoryData;
 	}
@@ -364,6 +364,7 @@ byte* OperandS(byte Opcode) {
 	if (OPARG_S_H(Opcode)) return &HL.Bytes.H;
 	if (OPARG_S_L(Opcode)) return &HL.Bytes.L;
 	if (OPARG_S_PHL(Opcode)) {
+		IndirectMemoryAccess = TRUE;
 		MemoryData = ReadMemory(PointerReg->Word + (word)(sbyte)Index);
 		return &MemoryData;
 	}
@@ -650,8 +651,9 @@ void SnapshotState(FILE * Handle) {
 		fprintf(Handle, "\tStore <FALSE>\n");
 	fprintf(Handle, "\tStack <0x%02x%02x>\n",
 		Memory[(word)(SP.Word + 1)], Memory[(word)(SP.Word + 0)]);
+	fprintf(Handle, "\tTStates <%u>\n", TStates);
 	Disassemble(&InstructionAddress, Mnemonic);
-	fprintf(Handle, "\tMnemonic <%s>\n", Mnemonic);
+	fprintf(Handle, "\tNext mnemonic <%s>\n", Mnemonic);
 	fprintf(Handle, "End\n");
 }
 
@@ -1382,7 +1384,8 @@ trap Step() {
 	OldIFF1 = IFF1;
 	OldIFF2 = IFF2;
 	UsefulInstruction = FALSE;
-	IndirectMemoryWrite = MemoryWrite = FALSE;
+	IndirectMemoryAccess = FALSE;
+	MemoryWrite = FALSE;
 	if (EnableInterrupts)
 		IFF1 = TRUE;
 	if (OP_IXPREFIX(IReg)) {
@@ -1415,14 +1418,20 @@ trap Step() {
 			//TStates += 19; 
 		}
 		*OperandR(IReg) = *OperandS(IReg);
-		TStates += 4;
+		if (IndirectMemoryAccess == TRUE)
+			TStates += 7;
+		else
+			TStates += 4;
 	}
 	else if (OP_LD_R_B(IReg)) {
 		if (Indexing) {
 			Index = ReadMemory(PC.Word++);
 		}
 		*OperandR(IReg) = ReadMemory(PC.Word++);
-		TStates += 7;
+		if (IndirectMemoryAccess == TRUE)
+			TStates += 10;
+		else
+			TStates += 7;
 	}
 	else if (OP_LD_P_W(IReg)) {
 		*OperandP(IReg) = ReadMemory(PC.Word++);
@@ -1942,7 +1951,7 @@ trap Step() {
 
 	StoreFlags();
 
-	if (IndirectMemoryWrite) {
+	if (IndirectMemoryAccess) {
 		MemoryAddress = PointerReg->Word + (word)(sbyte)Index;
 		WriteMemory(MemoryAddress, MemoryData);
 	}
