@@ -1467,6 +1467,13 @@ trap Step() {
 		WriteMemory(addr, AF.Bytes.H);
 		TStates += 13;
 	}
+	else if (OP_LD_PW_HL(IReg)) {
+		word Address = ReadMemory(PC.Word++);
+		Address += ReadMemory(PC.Word++) << 8;
+		WriteMemory(Address, PointerReg->Bytes.L);
+		WriteMemory(Address + 1, PointerReg->Bytes.H);
+		TStates += 16;
+	}
 	else if (OP_LD_HL_PW(IReg)) {
 		word Address = ReadMemory(PC.Word++);
 		Address += ReadMemory(PC.Word++) << 8;
