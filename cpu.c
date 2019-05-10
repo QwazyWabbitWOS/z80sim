@@ -923,7 +923,7 @@ void Disassemble(word * Address, char* Mnemonic) {
 		if (Indexing) {
 			NameRegisterPair(&PointerReg->Word, NameI);
 			if (ZilogMnemonics)
-				sprintf(Mnemonic, "cp a, (%s + 0x%02x)", NameI, Memory[(*Address)++]);
+				sprintf(Mnemonic, "cp (%s + 0x%02x)", NameI, Memory[(*Address)++]);
 			else
 				sprintf(Mnemonic, "cp a, 0x%02x %s", Memory[(*Address)++], NameS);
 		}
