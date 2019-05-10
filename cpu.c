@@ -1861,9 +1861,23 @@ trap Step() {
 			TStates += 8;
 		}
 		else if (OP_CB_BIT_N_S(IReg)) {
-			FlagZ = !(FlagNZ = (*OperandS(IReg)) & (1 << OPPARM_N(IReg)));
+			FlagZ = !(FlagNZ = (*OperandS(IReg)) & (1 << (OPPARM_N(IReg) >> 3)));
 			FlagN = 0;
 			FlagH = 1;
+			if (Indexing)
+				TStates += 8;
+			else
+				TStates += 4;
+		}
+		else if (OP_CB_BIT_SET(IReg)) {
+			*OperandS(IReg) |= (1 << (OPPARM_N(IReg) >> 3));
+			if (Indexing)
+				TStates += 8;
+			else
+				TStates += 4;
+		}
+		else if (OP_CB_BIT_RES(IReg)) {
+			*OperandS(IReg) &= ~(1 << (OPPARM_N(IReg) >> 3));
 			if (Indexing)
 				TStates += 8;
 			else
