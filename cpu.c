@@ -1589,8 +1589,10 @@ trap Step() {
 		TStates += 7;
 	}
 	else if (OP_CP_S(IReg)) {
-		if (Indexing)
+		if (Indexing) {
+			TStates += 11;	// Indexed compare takes 19 states (4,4,3,5,3)
 			Index = ReadMemory(PC.Word++);
+		}
 		Compare(&AF.Bytes.H, *OperandS(IReg));
 		TStates += 4;
 	}
