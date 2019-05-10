@@ -1954,6 +1954,19 @@ trap Step() {
 			BC.Bytes.L = ReadIO(*OperandR(IReg));
 			TStates += 12;
 		}
+		else if (OP_ED_NEG(IReg)) {
+			FlagC = (AF.Bytes.H != 0) ? TRUE : FALSE;
+			FlagNC = !FlagC;
+			FlagP = (AF.Bytes.H == 0x80) ? TRUE : FALSE;
+			FlagPO = !FlagP;
+			AF.Bytes.H = ~AF.Bytes.H + 1;
+			FlagMS = SignBit(AF.Bytes.H);
+			FlagPS = !FlagMS;
+			FlagZ = (AF.Bytes.H == 0) ? TRUE : FALSE;
+			FlagNZ = !FlagZ;
+			FlagN = 1;
+			TStates += 8;
+		}
 		else {
 			fprintf(stdout, "ERROR: Unimplemented ED opcode %02x at PC = %04x\n", IReg, PC.Word - 1);
 			Exception = TRAP_ILLEGAL;
