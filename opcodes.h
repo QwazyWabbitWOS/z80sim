@@ -109,14 +109,14 @@
 
 // Two byte opcodes: CBxx
 #define OP_CB(Byte)         ((0xFF & (Byte)) == 0xCB)
-#define OP_CB_RLC(Byte)     ((0xF8 & (Byte)) == 0x00)
-#define OP_CB_RRC(Byte)     ((0xF8 & (Byte)) == 0x08)
-#define OP_CB_RL(Byte)      ((0xF8 & (Byte)) == 0x10)
-#define OP_CB_RR(Byte)      ((0xF8 & (Byte)) == 0x18)
-#define OP_CB_SLA(Byte)     ((0xF8 & (Byte)) == 0x20)
-#define OP_CB_SRA(Byte)     ((0xF8 & (Byte)) == 0x28)
-#define OP_CB_SLL(Byte)     ((0xF8 & (Byte)) == 0x30)
-#define OP_CB_SRL(Byte)     ((0xF8 & (Byte)) == 0x38)
+#define OP_CB_RLC(Byte)     ((0xF8 & (Byte)) == 0x00)	// Rotate Left w/Carry
+#define OP_CB_RRC(Byte)     ((0xF8 & (Byte)) == 0x08)	// Rotat Right w/Carry
+#define OP_CB_RL(Byte)      ((0xF8 & (Byte)) == 0x10)	// Rotate Left
+#define OP_CB_RR(Byte)      ((0xF8 & (Byte)) == 0x18)	// Rotate Right
+#define OP_CB_SLA(Byte)     ((0xF8 & (Byte)) == 0x20)	// Shift Left Arithmetic
+#define OP_CB_SRA(Byte)     ((0xF8 & (Byte)) == 0x28)	// Shift Right Arithmetic
+#define OP_CB_SLL(Byte)     ((0xF8 & (Byte)) == 0x30)	// Shift Left Logical
+#define OP_CB_SRL(Byte)     ((0xF8 & (Byte)) == 0x38)	// Shift Right Logical
 #define OP_CB_BIT_N_S(Byte) ((0xC0 & (Byte)) == 0x40)	// Bit test
 #define OP_CB_BIT_RES(Byte) ((0xC0 & (Byte)) == 0x80)	// Bit reset
 #define OP_CB_BIT_SET(Byte) ((0xC0 & (Byte)) == 0xC0)	// Bit set
@@ -144,7 +144,7 @@
 #define OP_ED_RRD(Byte)     ((0xFF & (Byte)) == 0x67)
 #define OP_ED_RLD(Byte)     ((0xFF & (Byte)) == 0x6F)
 
-#define OP_ED_NEG(Byte)     ((0xFF & (Byte)) == 0x44)
+#define OP_ED_NEG(Byte)     ((0xFF & (Byte)) == 0x44)	// Two's complement accumulator
 
 #define OP_ED_IM0(Byte)     ((0xFF & (Byte)) == 0x46)
 #define OP_ED_IM1(Byte)     ((0xFF & (Byte)) == 0x56)
