@@ -1383,6 +1383,7 @@ trap Step() {
 	OldIY = IY;
 	OldIFF1 = IFF1;
 	OldIFF2 = IFF2;
+	Index = 0;
 	UsefulInstruction = FALSE;
 	IndirectMemoryAccess = FALSE;
 	MemoryWrite = FALSE;
@@ -1404,8 +1405,6 @@ trap Step() {
 		PointerReg = &HL;
 		Indexing = FALSE;
 	}
-
-	Index = 0x00;
 
 	if (OP_HLT(IReg)) {
 		PC.Word--;
@@ -1514,10 +1513,9 @@ trap Step() {
 		else
 			SubByte(&AF.Bytes.H, *OperandS(IReg));
 		FlagN = 1;
+		TStates += 4;
 		if (Indexing)
-			TStates += 19;
-		else
-			TStates += 4;
+			TStates += 15;
 	}
 	else if (OP_SUB_B(IReg)) {
 		if (OPMOD_CARRYIN(IReg))
@@ -1710,10 +1708,9 @@ trap Step() {
 		WriteMemory((word)(SP.Word + 1), PointerReg->Bytes.H);
 		PointerReg->Bytes.H = TempH;
 		PointerReg->Bytes.L = TempL;
+		TStates += 19;
 		if (Indexing)
-			TStates += 23;
-		else
-			TStates += 19;
+			TStates += 4;
 	}
 	else if (OP_EXAFAF1(IReg)) {
 		Swap(&AF.Word, &AF1.Word);
@@ -1727,20 +1724,18 @@ trap Step() {
 	}
 	else if (OP_PUSH_P(IReg)) {
 		Push((OperandP(IReg) == &SP.Word) ? (AF.Word) : (*OperandP(IReg)));
+		TStates += 11;
 		if (Indexing)
-			TStates += 15;
-		else
-			TStates += 11;
+			TStates += 4;
 	}
 	else if (OP_POP_P(IReg)) {
 		if (OperandP(IReg) == &SP.Word)
 			Pop(&AF.Word);
 		else
 			Pop(OperandP(IReg));
+		TStates += 10;
 		if (Indexing)
-			TStates += 14;
-		else
-			TStates += 10;
+			TStates += 4;
 	}
 	else if (OP_RLA(IReg)) {
 		logic Carry = SignBit(AF.Bytes.H);
