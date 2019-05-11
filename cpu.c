@@ -89,7 +89,7 @@ unsigned long InstructionsExecuted;
 logic UsefulInstruction;
 
 logic Indexing;	// TRUE when we decoded IX or IY opcode prefixes
-logic IndirectMemoryAccess; // TRUE when doing any indirect-mode instructions 
+logic IndirectMemoryAccess; // TRUE when indirect-mode (HL), (IX/IY) 
 logic MemoryWrite;
 byte MemoryData;
 word MemoryAddress;
@@ -1830,21 +1830,21 @@ trap Step() {
 			TStates += 4;	// for the index fetch
 		}
 		IReg = ReadMemory(PC.Word++);
-		if (OP_CB_RLC(IReg)) {
+		if (OP_CB_RLC(IReg)) {	// C <- 7..0 <- 7
 			FlagC = SignBit(*OperandS(IReg));
 			FlagNC = !FlagC;
 			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
 			SetFlags(*OperandS(IReg));
 			TStates += 8;
 		}
-		else if (OP_CB_RL(IReg)) {
+		else if (OP_CB_RL(IReg)) {	// C <- 7..0 <- C
 			logic Carry = SignBit(*OperandS(IReg));
 			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
 			FlagNC = !(FlagC = Carry);
 			SetFlags(*OperandS(IReg));
 			TStates += 8;
 		}
-		else if (OP_CB_RRC(IReg)) {
+		else if (OP_CB_RRC(IReg)) {	// 0 -> 7..0 -> C
 			FlagC = ((*OperandS(IReg)) & 0x01);
 			FlagNC = !FlagC;
 			*OperandS(IReg) = ((*OperandS(IReg)) >> 1) + (FlagC ? 0x80 : 0);
@@ -1864,24 +1864,21 @@ trap Step() {
 			FlagZ = !(FlagNZ = (*OperandS(IReg)) & (1 << (OPPARM_N(IReg) >> 3)));
 			FlagN = 0;
 			FlagH = 1;
-			if (Indexing)
-				TStates += 8;
-			else
-				TStates += 4;
+			TStates += 4;
+			if (IndirectMemoryAccess)
+				TStates += 7;
 		}
 		else if (OP_CB_BIT_SET(IReg)) {
 			*OperandS(IReg) |= (1 << (OPPARM_N(IReg) >> 3));
-			if (Indexing)
-				TStates += 8;
-			else
-				TStates += 4;
+			TStates += 4;
+			if (IndirectMemoryAccess)
+				TStates += 7;
 		}
 		else if (OP_CB_BIT_RES(IReg)) {
 			*OperandS(IReg) &= ~(1 << (OPPARM_N(IReg) >> 3));
-			if (Indexing)
-				TStates += 8;
-			else
-				TStates += 4;
+			TStates += 4;
+			if (IndirectMemoryAccess)
+				TStates += 7;
 		}
 		else {
 			fprintf(stdout, "ERROR: Unimplemented CB opcode %02x at PC = %04x\n", IReg, PC.Word - 1);
