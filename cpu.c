@@ -89,7 +89,7 @@ unsigned long InstructionsExecuted;
 logic UsefulInstruction;
 
 logic Indexing;	// TRUE when we decoded IX or IY opcode prefixes
-logic IndirectMemoryAccess; // TRUE when indirect-mode (HL), (IX/IY) 
+logic IndirectMemoryAccess; // TRUE when register indirect mode (HL), (IX/IY) 
 logic MemoryWrite;
 byte MemoryData;
 word MemoryAddress;
@@ -1836,13 +1836,8 @@ trap Step() {
 			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
 			SetFlags(*OperandS(IReg));
 			TStates += 8;
-		}
-		else if (OP_CB_RL(IReg)) {	// C <- 7..0 <- C
-			logic Carry = SignBit(*OperandS(IReg));
-			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
-			FlagNC = !(FlagC = Carry);
-			SetFlags(*OperandS(IReg));
-			TStates += 8;
+			if (IndirectMemoryAccess)
+				TStates += 7;
 		}
 		else if (OP_CB_RRC(IReg)) {	// 0 -> 7..0 -> C
 			FlagC = ((*OperandS(IReg)) & 0x01);
@@ -1850,15 +1845,74 @@ trap Step() {
 			*OperandS(IReg) = ((*OperandS(IReg)) >> 1) + (FlagC ? 0x80 : 0);
 			SetFlags(*OperandS(IReg));
 			TStates += 8;
+			if (IndirectMemoryAccess)
+				TStates += 7;
 		}
-		else if (OP_CB_SLA(IReg)) {
+		else if (OP_CB_RL(IReg)) {	// C <- 7..0 <- C
+			logic Carry = SignBit(*OperandS(IReg));
+			*OperandS(IReg) = ((*OperandS(IReg)) << 1) + (FlagC ? 1 : 0);
+			FlagNC = !(FlagC = Carry);
+			SetFlags(*OperandS(IReg));
+			TStates += 8;
+			if (IndirectMemoryAccess)
+				TStates += 7;
+		}
+		else if (OP_CB_RR(IReg)) {	// C -> 7..0 -> C
+			logic Carry = (*OperandS(IReg) & 0x01);
+			*OperandS(IReg) = ((*OperandS(IReg)) >> 1) + (FlagC ? 1 : 0);
+			FlagC = Carry;
+			FlagNC = !FlagC;
+			SetFlags(*OperandS(IReg));
+			TStates += 8;
+			if (IndirectMemoryAccess)
+				TStates += 7;
+		}
+		else if (OP_CB_SLA(IReg)) {	// C <- 7..0 <- 0
 			FlagC = SignBit(*OperandS(IReg));
 			FlagNC = !FlagC;
-			*OperandS(IReg) = (*OperandS(IReg)) << 1;
+			*OperandS(IReg) = ((*OperandS(IReg)) << 1) & 0x7e;
 			SetFlags(*OperandS(IReg));
 			FlagN = 0;
 			FlagH = 0;
-			TStates += 8;
+			TStates += 4;
+			if (IndirectMemoryAccess)
+				TStates += 7;
+		}
+		else if (OP_CB_SLL(IReg)) {	// C <- 7..0 <- 1
+			FlagC = SignBit(*OperandS(IReg));
+			FlagNC = !FlagC;
+			*OperandS(IReg) = ((*OperandS(IReg)) << 1) | 1;
+			SetFlags(*OperandS(IReg));
+			FlagN = 0;
+			FlagH = 0;
+			TStates += 4;
+			if (IndirectMemoryAccess)
+				TStates += 7;
+		}
+		else if (OP_CB_SRA(IReg)) {	// 7 -> 7..0 -> C
+			byte bit7 = (SignBit(*OperandS(IReg)) << 7);
+			FlagC = ((*OperandS(IReg)) & 0x01);
+			FlagNC = !FlagC;
+			*OperandS(IReg) = (*OperandS(IReg)) >> 1;
+			*OperandS(IReg) += bit7;
+			SetFlags(*OperandS(IReg));
+			FlagN = 0;
+			FlagH = 0;
+			TStates += 4;
+			if (IndirectMemoryAccess)
+				TStates += 7;
+		}
+		else if (OP_CB_SRL(IReg)) {	// 0 -> 7..0 -> C
+			FlagC = ((*OperandS(IReg)) & 0x01);
+			FlagNC = !FlagC;
+			*OperandS(IReg) = (*OperandS(IReg)) >> 1;
+			*OperandS(IReg) &= 0x7f;
+			SetFlags(*OperandS(IReg));
+			FlagN = 0;
+			FlagH = 0;
+			TStates += 4;
+			if (IndirectMemoryAccess)
+				TStates += 7;
 		}
 		else if (OP_CB_BIT_N_S(IReg)) {
 			FlagZ = !(FlagNZ = (*OperandS(IReg)) & (1 << (OPPARM_N(IReg) >> 3)));
