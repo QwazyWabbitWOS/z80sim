@@ -8,9 +8,11 @@ and adds Visual Studio 2017 project files.
 Some logic errors are fixed and the formatting of
 code is aligned to a more standard style for debugging
 purposes.
+
 Style changes were made to eliminate potential undefined behavior.
 The help display is a bit more explanatory.
 
-The emulator is still fairly incomplete. Some primary opcodes are not implemented and a lot of the multi-byte opcodes are not implemented. 
+The original emulator was very incomplete. Some primary opcodes were not implemented and many of the multi-byte opcodes were not implemented. 
 
-The disassembler now decodes all instructions.
+This fork of the disassembler now decodes all instructions and optionally uses Zilog mnemonics vs sdcc mnemonics.
+Improved trace log output.
