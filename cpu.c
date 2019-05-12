@@ -2031,7 +2031,7 @@ trap Step() {
 			Compare(&AF.Bytes.H, Memory[HL.Word]);
 			HL.Word -= 1;
 			BC.Word -= 1;
-			FlagP = !(BC.Word == 0);
+			FlagP = BC.Word != 0 ? TRUE : FALSE;
 			FlagPO = !FlagP;
 			TStates += 16;
 		}
@@ -2039,7 +2039,7 @@ trap Step() {
 			Compare(&AF.Bytes.H, Memory[HL.Word]);
 			HL.Word -= 1;
 			BC.Word -= 1;
-			FlagP = BC.Word == 0 ? FALSE : TRUE;
+			FlagP = BC.Word != 0 ? TRUE : FALSE;
 			FlagPO = !FlagP;
 			TStates += 16;
 			if (FlagPO || FlagNZ) { // Repeat until A = (HL) or BC = 0
@@ -2051,7 +2051,7 @@ trap Step() {
 			Compare(&AF.Bytes.H, Memory[HL.Word]);
 			HL.Word += 1;
 			BC.Word -= 1;
-			FlagP = !(BC.Word == 0);
+			FlagP = BC.Word != 0 ? TRUE : FALSE;
 			FlagPO = !FlagP;
 			TStates += 16;
 		}
@@ -2059,7 +2059,7 @@ trap Step() {
 			Compare(&AF.Bytes.H, Memory[HL.Word]);
 			HL.Word += 1;
 			BC.Word -= 1;
-			FlagP = BC.Word == 0 ? FALSE : TRUE;
+			FlagP = BC.Word != 0 ? TRUE : FALSE;
 			FlagPO = !FlagP;
 			TStates += 16;
 			if (FlagPO || FlagNZ) {	// Repeat until A = (HL) or BC = 0
