@@ -190,7 +190,7 @@ void SubByte(byte * Register, byte Operand) {
 	Sum = Op1 + Op2;
 	*Register = (byte)Sum;
 	SetFlags(*Register);
-	FlagH = ((Op1 & 0x08) ^ (Op2 & 0x08) ^ (Sum & 0x08));
+	FlagH = 1 && ((Op1 & 0x08) ^ (Op2 & 0x08) ^ (Sum & 0x08));
 	FlagC = (Sum > (word)0xFF);
 	FlagNC = !FlagC;
 	FlagP = (SignBit(Op1) == SignBit(Op2) && SignBit((byte)Sum) != SignBit(Op1));
