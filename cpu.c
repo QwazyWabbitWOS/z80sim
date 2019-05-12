@@ -2027,13 +2027,45 @@ trap Step() {
 			FlagN = 1;
 			TStates += 8;
 		}
-		else if (OP_ED_CPD(IReg)) {
+		else if (OP_ED_CPD(IReg)) { // A - (HL), HL = HL + 1, BC = BC - 1
 			Compare(&AF.Bytes.H, Memory[HL.Word]);
 			HL.Word -= 1;
 			BC.Word -= 1;
 			FlagP = !(BC.Word == 0);
 			FlagPO = !FlagP;
 			TStates += 16;
+		}
+		else if (OP_ED_CPDR(IReg)) {
+			Compare(&AF.Bytes.H, Memory[HL.Word]);
+			HL.Word -= 1;
+			BC.Word -= 1;
+			FlagP = BC.Word == 0 ? FALSE : TRUE;
+			FlagPO = !FlagP;
+			TStates += 16;
+			if (FlagPO || FlagNZ) { // Repeat until A = (HL) or BC = 0
+				PC.Word -= 2;
+				TStates += 5;
+			}
+		}
+		else if (OP_ED_CPI(IReg)) { // A - (HL), HL = HL + 1, BC = BC - 1
+			Compare(&AF.Bytes.H, Memory[HL.Word]);
+			HL.Word += 1;
+			BC.Word -= 1;
+			FlagP = !(BC.Word == 0);
+			FlagPO = !FlagP;
+			TStates += 16;
+		}
+		else if (OP_ED_CPIR(IReg)) { // A - (HL), HL = HL + 1, BC = BC - 1
+			Compare(&AF.Bytes.H, Memory[HL.Word]);
+			HL.Word += 1;
+			BC.Word -= 1;
+			FlagP = BC.Word == 0 ? FALSE : TRUE;
+			FlagPO = !FlagP;
+			TStates += 16;
+			if (FlagPO || FlagNZ) {	// Repeat until A = (HL) or BC = 0
+				PC.Word -= 2;
+				TStates += 5;
+			}
 		}
 		else {
 			fprintf(stdout, "ERROR: Unimplemented ED opcode %02x at PC = %04x\n", IReg, PC.Word - 1);
