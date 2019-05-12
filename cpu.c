@@ -2027,6 +2027,14 @@ trap Step() {
 			FlagN = 1;
 			TStates += 8;
 		}
+		else if (OP_ED_CPD(IReg)) {
+			Compare(&AF.Bytes.H, Memory[HL.Word]);
+			HL.Word -= 1;
+			BC.Word -= 1;
+			FlagP = !(BC.Word == 0);
+			FlagPO = !FlagP;
+			TStates += 16;
+		}
 		else {
 			fprintf(stdout, "ERROR: Unimplemented ED opcode %02x at PC = %04x\n", IReg, PC.Word - 1);
 			Exception = TRAP_ILLEGAL;
