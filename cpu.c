@@ -190,7 +190,7 @@ void SubByte(byte * Register, byte Operand) {
 	Sum = Op1 + Op2;
 	*Register = (byte)Sum;
 	SetFlags(*Register);
-	FlagH = 1 && ((Op1 & 0x08) ^ (Op2 & 0x08) ^ (Sum & 0x08));
+	FlagH = ((Op1 & 0x08) ^ (Op2 & 0x08) ^ (Sum & 0x08)) ? TRUE : FALSE;
 	FlagC = (Sum > (word)0xFF);
 	FlagNC = !FlagC;
 	FlagP = (SignBit(Op1) == SignBit(Op2) && SignBit((byte)Sum) != SignBit(Op1));
@@ -205,7 +205,7 @@ void SubByte(byte * Register, byte Operand) {
 void AddWord(word * Register, word Operand) {
 	long Sum;
 	Sum = *Register + Operand;
-	FlagH = (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00);
+	FlagH = (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00) ? TRUE : FALSE;
 	*Register = (word)Sum;
 	FlagC = (Sum > 0xFFFF);
 	FlagNC = !FlagC;
@@ -218,7 +218,7 @@ void SubWord(word * Register, word Operand) {
 	long Sum;
 	Operand = -Operand;
 	Sum = *Register + Operand;
-	FlagH = (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00);
+	FlagH = (((*Register) & 0x0F00) + (Operand & 0x0F00) > 0x0F00) ? TRUE : FALSE;
 	*Register = (word)Sum;
 	FlagC = (Sum < 0xFFFF);
 	FlagNC = !FlagC;
