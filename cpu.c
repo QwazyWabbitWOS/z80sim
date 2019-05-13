@@ -1413,6 +1413,28 @@ trap Step() {
 		if (TrapOnHalt)
 			Exception = TRAP_HALT;
 	}
+	else if (OP_DAA(IReg)) {
+		int     acc, carry, d;
+		acc = AF.Bytes.H;
+		if (acc > 0x99 || FlagC) {
+			carry = FlagC;
+			d = 0x60;
+		}
+		else
+			carry = d = 0;
+		if ((acc & 0x0f) > 0x09 || FlagH)
+			d += 0x06;
+		AF.Bytes.H += FlagN ? -d : +d;
+		FlagMS = AF.Bytes.H & 0x80 ? TRUE : FALSE;
+		FlagPS = !FlagMS;
+		FlagZ = (AF.Bytes.H == 0) ? TRUE : FALSE;
+		FlagNZ = !FlagZ;
+		FlagP = Parity(AF.Bytes.H);
+		FlagPO = !FlagP;
+		FlagC = carry;
+		FlagNC = !FlagC;
+		TStates += 4;
+	}
 	else if (OP_LD_R_S(IReg)) {
 		if (Indexing) {
 			Index = ReadMemory(PC.Word++);
@@ -2027,7 +2049,7 @@ trap Step() {
 			FlagN = 1;
 			TStates += 8;
 		}
-		else if (OP_ED_CPD(IReg)) { // A - (HL), HL = HL + 1, BC = BC - 1
+		else if (OP_ED_CPD(IReg)) { // A - (HL), HL = HL - 1, BC = BC - 1
 			Compare(&AF.Bytes.H, Memory[HL.Word]);
 			HL.Word -= 1;
 			BC.Word -= 1;
