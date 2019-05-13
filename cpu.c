@@ -1026,10 +1026,16 @@ void Disassemble(word * Address, char* Mnemonic) {
 		sprintf(Mnemonic, "rra");
 	}
 	else if (OP_IN_B(Opcode)) {
-		sprintf(Mnemonic, "in a, %02x", Memory[(*Address)++]);
+		if (ZilogMnemonics)
+			sprintf(Mnemonic, "in a, (%02x)", Memory[(*Address)++]);
+		else
+			sprintf(Mnemonic, "in a, %02x", Memory[(*Address)++]);
 	}
 	else if (OP_OUT_B(Opcode)) {
-		sprintf(Mnemonic, "out %02x, a", Memory[(*Address)++]);
+		if (ZilogMnemonics)
+			sprintf(Mnemonic, "out (%02x), a", Memory[(*Address)++]);
+		else
+			sprintf(Mnemonic, "out %02x, a", Memory[(*Address)++]);
 	}
 	else if (OP_RST00(Opcode)) {
 		sprintf(Mnemonic, "rst 0x00");
@@ -2035,6 +2041,22 @@ trap Step() {
 		else if (OP_ED_IN_R_C(IReg)) {
 			BC.Bytes.L = ReadIO(*OperandR(IReg));
 			TStates += 12;
+		}
+		else if (OP_ED_OUT_C_R(IReg)) {
+			WriteIO(*OperandR(IReg), BC.Bytes.L);
+			TStates += 12;
+		}
+		else if (OP_ED_OUTI(IReg)) {
+			puts("OUTI instruction not implemented");
+		}
+		else if (OP_ED_OTIR(IReg)) {
+			puts("OTIR instruction not implemented");
+		}
+		else if (OP_ED_OUTD(IReg)) {
+			puts("OUTD instruction not implemented");
+		}
+		else if (OP_ED_OTDR(IReg)) {
+			puts("OTDR instruction not implemented");
 		}
 		else if (OP_ED_NEG(IReg)) {
 			FlagC = (AF.Bytes.H != 0) ? TRUE : FALSE;
