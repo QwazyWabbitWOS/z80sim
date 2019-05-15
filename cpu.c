@@ -659,8 +659,16 @@ void SnapshotState(FILE * Handle) {
 
 
 void PrintRegisters(FILE * Handle) {
-	fprintf(Handle, "SP:%04x AF:%04x BC:%04x DE:%04x HL:%04x IX:%04x IY:%04x",
-		SP.Word, AF.Word, BC.Word, DE.Word, HL.Word, IX.Word, IY.Word);
+	fprintf(Handle,
+		"AF :%04x BC :%04x DE :%04x HL :%04x IX:%04x IY:%04x IR:%04x "
+		"F: %c%c%c%c%c%c%c%c \n"
+		"AF':%04x BC':%04x DE':%04x HL':%04x IFF1:%d IFF2:%d SP:%04x",
+		AF.Word, BC.Word, DE.Word, HL.Word, IX.Word, IY.Word, IR.Word,
+		(AF.Bytes.L >> 7 & 1) ? 'S' : '-', (AF.Bytes.L >> 6 & 1) ? 'Z' : '-',
+		(AF.Bytes.L >> 5 & 1) ? '5' : '-', (AF.Bytes.L >> 4 & 1) ? 'H' : '-',
+		(AF.Bytes.L >> 3 & 1) ? '3' : '-', (AF.Bytes.L >> 2 & 1) ? 'P' : '-',
+		(AF.Bytes.L >> 1 & 1) ? 'N' : '-', (AF.Bytes.L >> 0 & 1) ? 'C' : '-',
+		AF1.Word, BC1.Word, DE1.Word, HL1.Word, IFF1, IFF2, SP.Word);
 }
 
 

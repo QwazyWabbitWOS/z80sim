@@ -44,7 +44,7 @@ information can include:
 
 - The internal state of the simulated processor after each instruction
 executed, including the registers AF, BC, DE, HL and the equivalents in the
-second bank, IX, IY, PC, SP, (!!!TODO) I, R, IFF1, IFF2
+second bank, IX, IY, PC, SP, I, R, IFF1, IFF2
 - Each instruction executed in its mnemonic (assembly) form, with direct
 addresses shown as literals instead of plain numbers if a symbols map is
 present
@@ -167,7 +167,7 @@ The debugger command 'eval <expression>' only returns the current walue of
 <expression> without setting a watchpoint.
 
 The syntax for other commands available in the debugger can be obtained by
-typing the command 'help' (!!!TODO).
+typing the command 'help'.
 
 MEMORY PROTECTION
 -----------------

@@ -107,7 +107,6 @@ int main(int argc, char* argv[]) {
 	FILE* SymbolsFile;
 	FILE* DebugFile;
 	FILE* StateLog;
-	logic TraceExecution;
 	word InstructionAddress;
 	char Mnemonic[MAX_NAME];
 
@@ -124,6 +123,7 @@ int main(int argc, char* argv[]) {
 		else if (!strcmp(argv[i], "--trace") ||
 			!strcmp(argv[i], "-t")) {
 			TraceExecution = TRUE;
+			fprintf(stdout, "Tracing %s\n", TraceExecution ? "ON" : "Off");
 		}
 		else if (!strcmp(argv[i], "--symbols") ||
 			!strcmp(argv[i], "-s")) {

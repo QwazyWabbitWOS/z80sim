@@ -26,6 +26,7 @@
 #define CMD_HELP    14
 #define CMD_RESET   15
 #define CMD_EXAMINE 16
+#define CMD_TRACE   17
 
 #define CMD_INFO_WATCHPOINTS 100
 #define CMD_INFO_WARRANTY    101
@@ -36,6 +37,7 @@
 #define LEX_RUN              "run"
 #define LEX_STEP             "step"
 #define LEX_STEPI            "stepi"
+#define LEX_TRACE            "trace"
 #define LEX_WATCH            "watch"
 #define LEX_EVAL             "eval"
 #define LEX_DISASM           "disasm"
@@ -82,6 +84,7 @@ void InitDebugger(void) {
 	CreateToken(DebugTokens, LEX_DISASM, CMD_DISASM);
 	CreateToken(DebugTokens, LEX_EXAMINE, CMD_EXAMINE);
 	CreateToken(DebugTokens, LEX_STACK, CMD_STACK);
+	CreateToken(DebugTokens, LEX_TRACE, CMD_TRACE);
 	CreateToken(DebugTokens, LEX_IRQ, CMD_IRQ);
 	CreateToken(DebugTokens, LEX_NAME, CMD_NAME);
 	CreateToken(DebugTokens, LEX_ENABLE, CMD_ENABLE);
@@ -360,6 +363,7 @@ logic Debugger() {
 			fprintf(stdout, "\t%s\t%s\n", LEX_STACK, "Display n words at stack pointer ("LEX_STACK" [n])");
 			fprintf(stdout, "\t%s\t%s\n", LEX_STEP, "Single-step the next opcode");
 			fprintf(stdout, "\t%s\t%s\n", LEX_STEPI, "Single-step the next C line");
+			fprintf(stdout, "\t%s\t%s\n", LEX_TRACE, "Toggle console tracing");
 			fprintf(stdout, "\t%s\t%s\n", LEX_WATCH, "Set watchpoint");
 			fprintf(stdout, "\tinfo %s\n", LEX_INFO_WATCHPOINTS);
 			fprintf(stdout, "\tinfo %s\n", LEX_INFO_WARRANTY);
@@ -377,6 +381,10 @@ logic Debugger() {
 			return FALSE;
 		case CMD_WATCH:
 			ExecuteWatch(OtherTokens);
+			break;
+		case CMD_TRACE:
+			TraceExecution = !TraceExecution;
+			fprintf(stdout, "Tracing %s\n", TraceExecution ? "ON": "Off");
 			break;
 		case CMD_EVAL:
 			ExecuteEval(OtherTokens);

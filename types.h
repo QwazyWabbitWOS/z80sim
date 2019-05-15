@@ -34,4 +34,5 @@ typedef signed char sbyte;
 
 logic ZilogMnemonics;	// -z or --zilog switch
 logic TrapOnHalt;		// --halt switch
+logic TraceExecution;	// --trace switch
 #endif
