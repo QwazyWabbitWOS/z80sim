@@ -90,6 +90,7 @@ logic UsefulInstruction;
 
 logic Indexing;	// TRUE when we decoded IX or IY opcode prefixes
 logic IndirectMemoryAccess; // TRUE when register indirect mode (HL), (IX/IY) 
+logic NoFlagUpdate; // TRUE to prevent flag update (EX, EXX, etc.)
 logic MemoryWrite;
 byte MemoryData;
 word MemoryAddress;
@@ -128,6 +129,10 @@ inline logic Parity(byte Byte) {
 // Copy the contents of the Flag* logic variables into the actual F register.
 //
 void StoreFlags() {
+	if (NoFlagUpdate) {
+		NoFlagUpdate = FALSE;
+		return;
+	}
 	assert(FlagZ == !FlagNZ);
 	assert(FlagC == !FlagNC);
 	assert(FlagP == !FlagPO);
@@ -1733,10 +1738,12 @@ trap Step() {
 		UsefulInstruction = TRUE;
 	}
 	else if (OP_EXDEHL(IReg)) {
+		NoFlagUpdate = TRUE;
 		Swap(&DE.Word, &HL.Word);
 		TStates += 4;
 	}
 	else if (OP_EXPSPHL(IReg)) {
+		NoFlagUpdate = TRUE;
 		byte TempH, TempL;
 		TempL = ReadMemory((word)(SP.Word + 0));
 		TempH = ReadMemory((word)(SP.Word + 1));
@@ -1749,10 +1756,12 @@ trap Step() {
 			TStates += 4;
 	}
 	else if (OP_EXAFAF1(IReg)) {
+		NoFlagUpdate = TRUE;
 		Swap(&AF.Word, &AF1.Word);
 		TStates += 4;
 	}
 	else if (OP_EXX(IReg)) {
+		NoFlagUpdate = TRUE;
 		Swap(&BC.Word, &BC1.Word);
 		Swap(&DE.Word, &DE1.Word);
 		Swap(&HL.Word, &HL1.Word);
