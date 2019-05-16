@@ -639,23 +639,23 @@ void SnapshotState(FILE * Handle) {
 	word InstructionAddress;
 	InstructionAddress = PC.Word;
 	fprintf(Handle, "Frame %ld Begin\n", InstructionsExecuted);
-	fprintf(Handle, "\tPC <0x%04x> SP <0x%04x>\n", PC.Word, SP.Word);
-	fprintf(Handle, "\tAF <0x%04x>", AF.Word);
-	fprintf(Handle, "\t<%c%c%c%c%c%c%c%c>\n",
+	fprintf(Handle, "\tPC <0x%04x> SP <0x%04x> ", PC.Word, SP.Word);
+	fprintf(Handle, "Flags <%c%c%c%c%c%c%c%c>\n",
 		(AF.Bytes.L >> 7 & 1) ? 'S' : '-', (AF.Bytes.L >> 6 & 1) ? 'Z' : '-',
 		(AF.Bytes.L >> 5 & 1) ? '5' : '-', (AF.Bytes.L >> 4 & 1) ? 'H' : '-',
 		(AF.Bytes.L >> 3 & 1) ? '3' : '-', (AF.Bytes.L >> 2 & 1) ? 'P' : '-',
 		(AF.Bytes.L >> 1 & 1) ? 'N' : '-', (AF.Bytes.L >> 0 & 1) ? 'C' : '-');
-	fprintf(Handle, "\tHL <0x%04x>\n", HL.Word);
-	fprintf(Handle, "\tIX <0x%04x> IY <0x%04x>\n", IX.Word, IY.Word);
-	fprintf(Handle, "\tBC <0x%04x> DE <0x%04x>\n", BC.Word, DE.Word);
-	fprintf(Handle, "\tMAR <0x%04x> MDR <0x%02x>\n", MemoryAddress, MemoryData);
-	if (MemoryWrite)
-		fprintf(Handle, "\tStore <TRUE>\n");
-	else
-		fprintf(Handle, "\tStore <FALSE>\n");
-	fprintf(Handle, "\tStack <0x%02x%02x>\n",
-		Memory[(word)(SP.Word + 1)], Memory[(word)(SP.Word + 0)]);
+	fprintf(Handle, "\tAF  <0x%04x> ", AF.Word);
+	fprintf(Handle, "BC  <0x%04x> DE  <0x%04x> ", BC.Word, DE.Word);
+	fprintf(Handle, "HL  <0x%04x>\n", HL.Word);
+	fprintf(Handle, "\tAF' <0x%04x> ", AF1.Word);
+	fprintf(Handle, "BC' <0x%04x> DE' <0x%04x> ", BC1.Word, DE1.Word);
+	fprintf(Handle, "HL' <0x%04x>\n", HL1.Word);
+	fprintf(Handle, "\tIX  <0x%04x> IY  <0x%04x>\n", IX.Word, IY.Word);
+	fprintf(Handle, "\tMAR <0x%04x> MDR <0x%02x> ", MemoryAddress, MemoryData);
+	fprintf(Handle, "Store <%s>\n", (MemoryWrite) ? "TRUE" : "FALSE");
+	//fprintf(Handle, "\tStack <0x%02x%02x>\n",
+	//	Memory[(word)(SP.Word + 1)], Memory[(word)(SP.Word + 0)]);
 	fprintf(Handle, "\tTStates <%u>\n", TStates);
 	Disassemble(&InstructionAddress, Mnemonic);
 	fprintf(Handle, "\tNext mnemonic <%s>\n", Mnemonic);
