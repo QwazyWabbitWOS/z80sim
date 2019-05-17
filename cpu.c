@@ -2052,6 +2052,32 @@ trap Step() {
 			SetFlags(AF.Bytes.H);
 			TStates += 18;
 		}
+		else if (OP_ED_R_A(IReg)) {
+			IR.Bytes.L = AF.Bytes.H;
+			NoFlagUpdate = TRUE;
+			TStates += 9;
+		}
+		else if (OP_ED_A_R(IReg)) {
+			AF.Bytes.H = IR.Bytes.L;
+			SetFlags(AF.Bytes.H);
+			FlagH = FlagN = 0;
+			FlagP = IFF2;
+			FlagPO = !FlagP;
+			TStates += 9;
+		}
+		else if (OP_ED_A_I(IReg)) {
+			AF.Bytes.H = IR.Bytes.H;
+			SetFlags(AF.Bytes.H);
+			FlagH = FlagN = 0;
+			FlagP = IFF2;
+			FlagPO = !FlagP;
+			TStates += 9;
+		}
+		else if (OP_ED_I_A(IReg)) {
+			IR.Bytes.H = AF.Bytes.H;
+			NoFlagUpdate = TRUE;
+			TStates += 9;
+		}
 		else if (OP_ED_RETI(IReg)) {
 			puts("RETI instruction not implemented"); //TODO: Implement RETI
 		}
