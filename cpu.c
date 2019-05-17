@@ -651,7 +651,7 @@ void SnapshotState(FILE * Handle) {
 	fprintf(Handle, "\tAF' <0x%04x> ", AF1.Word);
 	fprintf(Handle, "BC' <0x%04x> DE' <0x%04x> ", BC1.Word, DE1.Word);
 	fprintf(Handle, "HL' <0x%04x>\n", HL1.Word);
-	fprintf(Handle, "\tIX  <0x%04x> IY  <0x%04x>\n", IX.Word, IY.Word);
+	fprintf(Handle, "\tIX  <0x%04x> IY  <0x%04x> IR  <0x%04x>\n", IX.Word, IY.Word, IR.Word);
 	fprintf(Handle, "\tMAR <0x%04x> MDR <0x%02x> ", MemoryAddress, MemoryData);
 	fprintf(Handle, "Store <%s>\n", (MemoryWrite) ? "TRUE" : "FALSE");
 	//fprintf(Handle, "\tStack <0x%02x%02x>\n",
@@ -1381,6 +1381,15 @@ void ProcessIRQ() {
 	InterruptRequest = FALSE;
 }
 
+// Refresh increments R register by 2 every M1 cycle.
+// Bit 7 is never set or cleared here. Bit 0 is always 0.
+void ProcessRefresh(void)
+{
+	if (IR.Bytes.L == 0x7E)
+		IR.Bytes.L &= 0x80;
+	else
+		IR.Bytes.L += 2 & 0x7e;
+}
 
 // Execute the Z80 instruction pointed to by PC.
 //
@@ -1406,6 +1415,9 @@ trap Step() {
 	UsefulInstruction = FALSE;
 	IndirectMemoryAccess = FALSE;
 	MemoryWrite = FALSE;
+
+	ProcessRefresh();
+
 	if (EnableInterrupts)
 		IFF1 = TRUE;
 	if (OP_IXPREFIX(IReg)) {

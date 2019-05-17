@@ -48,6 +48,7 @@ typedef enum {
 void ResetCPU(void);	// Power-on reset Z80 state.
 void InitSimulation(void);
 void LoadROM(FILE* Handle);
+void ProcessRefresh(void);
 trap Step(void);
 void Disassemble(word* Address, char *Mnemonic);
 void SnapshotState(FILE* Handle);
