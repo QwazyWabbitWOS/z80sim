@@ -656,7 +656,7 @@ void SnapshotState(FILE * Handle) {
 	fprintf(Handle, "Store <%s>\n", (MemoryWrite) ? "TRUE" : "FALSE");
 	//fprintf(Handle, "\tStack <0x%02x%02x>\n",
 	//	Memory[(word)(SP.Word + 1)], Memory[(word)(SP.Word + 0)]);
-	fprintf(Handle, "\tTStates <%ul>\n", TStates);
+	fprintf(Handle, "\tTStates <%lu>\n", TStates);
 	Disassemble(&InstructionAddress, Mnemonic);
 	fprintf(Handle, "\tNext mnemonic <%s>\n", Mnemonic);
 	fprintf(Handle, "End\n");
