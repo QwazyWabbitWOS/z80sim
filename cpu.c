@@ -605,7 +605,7 @@ void MetaCall(byte Number) {
 		break;
 	case METACALL_PUTSTRING:
 		address = HL.Word;
-		while (s = ReadMemory((address)++))
+		while ((s = ReadMemory((address)++)))
 			fprintf(stderr, "%c", (int)s);
 		fprintf(stderr, "\n");
 		fflush(stderr);
@@ -656,7 +656,7 @@ void SnapshotState(FILE * Handle) {
 	fprintf(Handle, "Store <%s>\n", (MemoryWrite) ? "TRUE" : "FALSE");
 	//fprintf(Handle, "\tStack <0x%02x%02x>\n",
 	//	Memory[(word)(SP.Word + 1)], Memory[(word)(SP.Word + 0)]);
-	fprintf(Handle, "\tTStates <%u>\n", TStates);
+	fprintf(Handle, "\tTStates <%ul>\n", TStates);
 	Disassemble(&InstructionAddress, Mnemonic);
 	fprintf(Handle, "\tNext mnemonic <%s>\n", Mnemonic);
 	fprintf(Handle, "End\n");
