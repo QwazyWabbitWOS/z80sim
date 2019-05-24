@@ -33,6 +33,7 @@ typedef signed char sbyte;
 #define W1 ((word)1)
 
 logic ZilogMnemonics;	// -z or --zilog switch
+logic ProtectMemory;	// -p or --protect switch
 logic TrapOnHalt;		// --halt switch
 logic TraceExecution;	// --trace switch
 #endif

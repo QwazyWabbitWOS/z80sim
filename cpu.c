@@ -576,11 +576,21 @@ void InitSimulation() {
 	int i;
 
 	ResetCPU();
-	for (i = 0; i < 0x10000; i++) {	// 64k RAM
+	for (i = 0; i < SIZE_MEMORY; i++) {
 		Memory[i] = 0x00;
 	}
-	//ProtectRange(0x0000, 0x3fff, PROTECT_WRITE);
-	ProtectRange(0x0000, 0xffff, 0);
+
+	fprintf(stdout, "Memory cleared\n");
+
+	if (ProtectMemory == TRUE) {
+		ProtectRange(0x0000, 0x3fff, PROTECT_WRITE);
+		fprintf(stdout, "Protecting base memory from 0 to 0x3fff\n");
+	}
+	else {
+		ProtectRange(0x0000, 0xffff, 0);
+		fprintf(stdout, "Base memory not write protected\n");
+	}
+
 	fprintf(stdout, "Simulation initialized\n");
 }
 
@@ -1472,8 +1482,10 @@ trap Step() {
 			TStates += 5;
 		}
 		*OperandR(IReg) = *OperandS(IReg);
-		if (IndirectMemoryAccess == TRUE)
+		if (IndirectMemoryAccess == TRUE) {
+			MemoryWrite = TRUE;
 			TStates += 7;
+		}
 		else
 			TStates += 4;
 	}
@@ -2039,6 +2051,7 @@ trap Step() {
 			a >>= 8;
 			AF.Bytes.H = a;
 			SetFlags(AF.Bytes.H);
+			FlagH = FlagN = FALSE;
 			TStates += 18;
 		}
 		else if (OP_ED_RLD(IReg)) {
@@ -2180,7 +2193,7 @@ trap Step() {
 
 	StoreFlags();
 
-	if (IndirectMemoryAccess) {
+	if (IndirectMemoryAccess && MemoryWrite) {
 		MemoryAddress = PointerReg->Word + (word)(sbyte)Index;
 		WriteMemory(MemoryAddress, MemoryData);
 	}
