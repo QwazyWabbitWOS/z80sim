@@ -64,6 +64,7 @@ void Usage(const char* ProgramName, const char* Message) {
 	fprintf(stdout, "  --protect (-p)       Protection is set for memory addresses");
 	fprintf(stdout, "	                    0 through 0x3fff (16384 bytes). Simulator");
 	fprintf(stdout, "                       will trap if program writes to this area.");
+	fprintf(stdout, "  --undoc (-u)         Trap on undocumented instructions.");
 	fprintf(stdout, "  --zilog (-z)         Outputs Zilog mnemonic output for indexed");
 	fprintf(stdout, "  	                    instructions instead of default.");
 	fprintf(stdout, "  --halt               Emulator stops executing when HALT instruction");
@@ -145,17 +146,19 @@ int main(int argc, char* argv[]) {
 			if (DebugFile == NULL)
 				fprintf(stdout, "Could not open debug file '%s'", argv[i]);
 		}
-		else if (!strcmp(argv[i], "--zilog") || !strcmp(argv[i], "-z")) {
-			ZilogMnemonics = TRUE;
+		else if (!strcmp(argv[i], "--halt")) {
+			TrapOnHalt = TRUE;
 		}
 		else if (!strcmp(argv[i], "--protect") || !strcmp(argv[i], "-p")) {
 			ProtectMemory = TRUE;
 		}
-		else if (!strcmp(argv[i], "--halt")) {
-			TrapOnHalt = TRUE;
+		else if (!strcmp(argv[i], "--undoc") || !strcmp(argv[i], "-u")) {
+			StopUndocumented = TRUE;
 		}
-		else if (!strcmp(argv[i], "--statelog") ||
-			!strcmp(argv[i], "-l")) {
+		else if (!strcmp(argv[i], "--zilog") || !strcmp(argv[i], "-z")) {
+			ZilogMnemonics = TRUE;
+		}
+		else if (!strcmp(argv[i], "--statelog") || !strcmp(argv[i], "-l")) {
 			i++;
 			if (i == argc)
 				Usage(argv[0], "Option '--statelog' requires a parameter");
@@ -236,6 +239,10 @@ int main(int argc, char* argv[]) {
 			break;
 		case TRAP_ILLEGAL:
 			fprintf(stdout, "\nTRAP: Illegal instruction executed\n");
+			Stop(InstructionAddress);
+			break;
+		case TRAP_UNDOCUMENTED:
+			fprintf(stdout, "\nTRAP: Undocumented instruction executed\n");
 			Stop(InstructionAddress);
 			break;
 		case TRAP_MEMORY:

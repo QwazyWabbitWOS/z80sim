@@ -36,14 +36,21 @@ typedef enum {
 	REG_IY,
 } regSpec;
 
-typedef enum {
+typedef enum traps {
 	TRAP_NONE,
 	TRAP_ILLEGAL,
 	TRAP_MEMORY,
 	TRAP_NOEFFECT,
 	TRAP_METACALL,
+	TRAP_UNDOCUMENTED,
 	TRAP_HALT
 } trap;
+
+logic ZilogMnemonics;	// -z or --zilog switch
+logic ProtectMemory;	// -p or --protect switch
+logic TrapOnHalt;		// --halt switch
+logic TraceExecution;	// --trace switch
+logic StopUndocumented;	// -u switch
 
 void ResetCPU(void);	// Power-on reset Z80 state.
 void InitSimulation(void);

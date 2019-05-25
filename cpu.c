@@ -96,6 +96,7 @@ byte MemoryData;
 word MemoryAddress;
 reg* PointerReg;
 byte Index;
+logic Undocumented;
 
 trap Exception;
 
@@ -1425,6 +1426,7 @@ trap Step() {
 	UsefulInstruction = FALSE;
 	IndirectMemoryAccess = FALSE;
 	MemoryWrite = FALSE;
+	Undocumented = FALSE;
 
 	ProcessRefresh();
 
@@ -1893,6 +1895,7 @@ trap Step() {
 			Index = ReadMemory(PC.Word++);
 			TStates += 4;	// for the index fetch
 		}
+		
 		IReg = ReadMemory(PC.Word++);
 		if (OP_CB_RLC(IReg)) {	// C <- 7..0 <- 7
 			FlagC = SignBit(*OperandS(IReg));
@@ -1943,6 +1946,7 @@ trap Step() {
 				TStates += 7;
 		}
 		else if (OP_CB_SLL(IReg)) {	// C <- 7..0 <- 1
+			Undocumented = TRUE;
 			FlagC = SignBit(*OperandS(IReg));
 			FlagNC = !FlagC;
 			*OperandS(IReg) = ((*OperandS(IReg)) << 1) | 1;
@@ -2206,9 +2210,15 @@ trap Step() {
 		//fprintf(stderr, "WARNING: instruction %02x at %04x had no effect\n", IR, PC.Word-1);
 		Exception = TRAP_NOEFFECT;
 	}
+	
+	if (Undocumented && StopUndocumented)
+		Exception = TRAP_UNDOCUMENTED;
+
 	InstructionsExecuted++;
+	
 	if (InterruptRequest && IFF1)
 		ProcessIRQ();
+	
 	return Exception;
 }
 
