@@ -2095,6 +2095,30 @@ trap Step() {
 			NoFlagUpdate = TRUE;
 			TStates += 9;
 		}
+		else if (OP_ED_INI(IReg)) {
+			puts("INI instruction not implemented");
+		}
+		else if (OP_ED_IND(IReg)) {
+			puts("IND instruction not implemented");
+		}
+		else if (OP_ED_INIR(IReg)) {
+			puts("INIR instruction not implemented");
+		}
+		else if (OP_ED_INDR(IReg)) {
+			puts("INDR instruction not implemented");
+		}
+		else if (OP_ED_LDI(IReg)) {
+			puts("LDI instruction not implemented");
+		}
+		else if (OP_ED_LDIR(IReg)) {
+			puts("LDIR instruction not implemented");
+		}
+		else if (OP_ED_LDD(IReg)) {
+			puts("LDD instruction not implemented");
+		}
+		else if (OP_ED_LDDR(IReg)) {
+			puts("LDDR instruction not implemented");
+		}
 		else if (OP_ED_RETI(IReg)) {
 			puts("RETI instruction not implemented"); //TODO: Implement RETI
 		}
