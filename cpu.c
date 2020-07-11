@@ -558,7 +558,7 @@ void ResetCPU(void)
 	DE1.Word = 0;
 	HL1.Word = 0;
 	/* Note:
-	* This flag state setup is not documented Z80 behavior on reset.
+	* This flag state setup is not the documented Z80 behavior on reset.
 	* Per Zilog manual, AF = 0xffff at reset.
 	* Real Z80 flags remain 0xff until opcode affecting flags changes them.
 	* Asserts in StoreFlags function will trap in that state.
@@ -1937,7 +1937,7 @@ trap Step() {
 		else if (OP_CB_SLA(IReg)) {	// C <- 7..0 <- 0
 			FlagC = SignBit(*OperandS(IReg));
 			FlagNC = !FlagC;
-			*OperandS(IReg) = ((*OperandS(IReg)) << 1) & 0x7e;
+			*OperandS(IReg) = ((*OperandS(IReg)) << 1);
 			SetFlags(*OperandS(IReg));
 			FlagN = 0;
 			FlagH = 0;
