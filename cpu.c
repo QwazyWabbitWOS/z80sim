@@ -971,10 +971,10 @@ void Disassemble(word * Address, char* Mnemonic) {
 		sprintf(Mnemonic, "jp (%s)", NameI);
 	}
 	else if (OP_JR_B(Opcode)) {
-		sprintf(Mnemonic, "jr 0x%02x", Memory[(*Address)++]);
+		sprintf(Mnemonic, "jr 0x%04x", Memory[(*Address)++]);
 	}
 	else if (OP_JR_SF_B(Opcode)) {
-		NameFlag(OperandF(Opcode), NameF);
+		NameFlag(OperandSF(Opcode), NameF);
 		sprintf(Mnemonic, "jr %s, 0x%02x", NameF, Memory[(*Address)++]);
 	}
 	else if (OP_DJNZ_B(Opcode)) {
@@ -1685,8 +1685,8 @@ trap Step() {
 		TStates += 12;
 	}
 	else if (OP_JR_SF_B(IReg)) {
-		Byte = ReadMemory(PC.Word++);
-		if (*OperandF(IReg)) {
+		Byte = ReadMemory(PC.Bytes.L++);
+		if (*OperandSF(IReg)) {
 			JumpRelative(Byte);
 			TStates += 12;
 		}
