@@ -88,7 +88,7 @@ unsigned long InstructionsExecuted;
 
 logic UsefulInstruction;
 
-logic Indexing;	// TRUE when we decoded IX or IY opcode prefixes
+int Indexing;	// Non-zero when we decoded IX or IY opcode prefixes
 logic IndirectMemoryAccess; // TRUE when register indirect mode (HL), (IX/IY) 
 logic NoFlagUpdate; // TRUE to prevent flag update (EX, EXX, etc.)
 logic MemoryWrite;
@@ -706,12 +706,12 @@ void Disassemble(word * Address, char* Mnemonic) {
 	if (OP_IXPREFIX(Opcode)) {
 		Opcode = ReadMemory((*Address)++);
 		PointerReg = &IX;
-		Indexing = TRUE;
+		Indexing = 1;
 	}
 	else if (OP_IYPREFIX(Opcode)) {
 		Opcode = ReadMemory((*Address)++);
 		PointerReg = &IY;
-		Indexing = TRUE;
+		Indexing = 2;
 	}
 	else {
 		PointerReg = &HL;
@@ -1015,7 +1015,12 @@ void Disassemble(word * Address, char* Mnemonic) {
 		sprintf(Mnemonic, "ex de, hl");
 	}
 	else if (OP_EXPSPHL(Opcode)) {
-		sprintf(Mnemonic, "ex (sp), hl");
+		if (Indexing == 1)
+			sprintf(Mnemonic, "ex (sp), ix");
+		else if (Indexing == 2)
+			sprintf(Mnemonic, "ex (sp), iy");
+		else
+			sprintf(Mnemonic, "ex (sp), hl");
 	}
 	else if (OP_EXAFAF1(Opcode)) {
 		sprintf(Mnemonic, "ex af, af'");
