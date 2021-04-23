@@ -1783,8 +1783,6 @@ trap Step() {
 		PointerReg->Bytes.H = TempH;
 		PointerReg->Bytes.L = TempL;
 		TStates += 19;
-		if (Indexing)
-			TStates += 4;
 	}
 	else if (OP_EXAFAF1(IReg)) {
 		NoFlagUpdate = TRUE;
