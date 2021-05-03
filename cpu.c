@@ -1030,14 +1030,14 @@ void Disassemble(word * Address, char* Mnemonic) {
 	}
 	else if (OP_PUSH_P(Opcode)) {
 		if (OperandP(Opcode) == &SP.Word)
-			strcpy(NameP, "AF");
+			strcpy(NameP, "af");
 		else
 			NameRegisterPair(OperandP(Opcode), NameP);
 		sprintf(Mnemonic, "push %s", NameP);
 	}
 	else if (OP_POP_P(Opcode)) {
 		if (OperandP(Opcode) == &SP.Word)
-			strcpy(NameP, "AF");
+			strcpy(NameP, "af");
 		else
 			NameRegisterPair(OperandP(Opcode), NameP);
 		sprintf(Mnemonic, "pop %s", NameP);
